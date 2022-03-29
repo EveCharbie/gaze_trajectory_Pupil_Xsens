@@ -1,8 +1,8 @@
-function [data] = mvnx_converter_general_trampo(mvnx)
+function [data] = mvnx_converter_general_trampo(mvnx, file_dir, file_name)
 
     %trim unwanted information
     temp = mvnx.subject.frames.frame;
-    % temp = temp(4:end); %get rid of unwanted fields
+    temp = temp(4:end); %get rid of unwanted fields
     % fields = { 'tc' , 'ms', 'type', 'index', 'footContacts', 'jointAngleXZY', 'jointAngleErgoXZY', 'jointAngleErgo', 'centerOfMass'}; %fields you would like to remove
     % temp = rmfield(temp, fields); 
 
@@ -84,12 +84,9 @@ function [data] = mvnx_converter_general_trampo(mvnx)
     %data.metaData.subject = Name;
     data.metaData.fs_xsens= mvnx.subject.frameRate ; %from xsens file metadata
 
+    data.metaData.mvnxName = file_name;
 
-    data.metaData.mvnxPath=[mvnxList(i).folder '/' mvnxList(i).name];
-
-
-
-    fileOut = ([file_dir '/' mvnxList(i).name(1:end-5)]) 
+    fileOut = ([file_dir '/' file_name(1:end-5)]);
 
     save( fileOut , 'data')
 
