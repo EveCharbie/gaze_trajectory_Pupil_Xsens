@@ -13,7 +13,7 @@ mvnx = load_mvnx([file_dir, '/' file_name])
 Subject_name = 'GuSe';
 Move_name = ['4-/', '43/', '4-/', '43/', '4-/', '43/', '4-/', '43/', '4-/', '43/'];
 
-mvnx_converter_general_trampo(mvnx, file_dir, file_name);
+mvnx_converter_general_trampo(mvnx, file_dir, file_name, Subject_name, Move_name);
 
 disp('coucou')
 

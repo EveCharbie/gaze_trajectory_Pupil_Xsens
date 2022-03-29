@@ -1,4 +1,4 @@
-function [data] = mvnx_converter_general_trampo(mvnx, file_dir, file_name)
+function [data] = mvnx_converter_general_trampo(mvnx, file_dir, file_name, Subject_name, Move_name)
 
     %trim unwanted information
     temp = mvnx.subject.frames.frame;
@@ -58,6 +58,11 @@ function [data] = mvnx_converter_general_trampo(mvnx, file_dir, file_name)
     data(1).sensorMagneticField=array2table(temp(1).sensorMagneticField,  'VariableNames', sensorLabels); %51
 
     data(1).jointAngle=array2table(temp(1).jointAngle,  'VariableNames', jointLabels); %66
+    data(1).centerOfMass=array2table(temp(1).centerOfMass);
+    
+    data(1).time = temp(1).time;
+    data(1).index = temp(1).index;
+    data(1).ms = temp(1).ms;
 
     for j=2:length(temp)
 
@@ -75,20 +80,34 @@ function [data] = mvnx_converter_general_trampo(mvnx, file_dir, file_name)
         data.sensorOrientation=[data.sensorOrientation; array2table(temp(j).sensorOrientation, 'VariableNames', sensorQLabels)];
 
         data.jointAngle=[data.jointAngle; array2table(temp(j).jointAngle, 'VariableNames', jointLabels)];
+        data.centerOfMass=[data.centerOfMass; array2table(temp(j).centerOfMass)];
+        
+        data.time = [data.time; temp(j).time];
+        data.index = [data.index; temp(j).index];
+        data.ms = [data.ms; temp(j).ms];
 
     end
-
+    
 
     %% Add metadata 
 
-    %data.metaData.subject = Name;
-    data.metaData.fs_xsens= mvnx.subject.frameRate ; %from xsens file metadata
-
-    data.metaData.mvnxName = file_name;
-
+    time = data.time;
+    index = data.index;
+    ms = data.ms;
+    frameRate = mvnx.subject.frameRate;
+    orientation = data.orientation;
+    velocity = data.velocity;
+    acceleration = data.acceleration;
+    angularVelocity = data.angularVelocity;
+    angularAcceleration = data.angularAcceleration;
+    sensorFreeAcceleration = data.sensorFreeAcceleration;
+    sensorOrientation = data.sensorOrientation;
+    jointAngle = data.jointAngle;
+    centerOfMass = data.centerOfMass;
+    
     fileOut = ([file_dir '/' file_name(1:end-5)]);
 
-    save( fileOut , 'data')
+    save( fileOut, 'Subject_name', 'Move_name', 'frameRate', 'time', 'index', 'ms', 'orientation', 'velocity', 'acceleration', 'angularVelocity', 'angularAcceleration', 'sensorFreeAcceleration', 'sensorOrientation', 'jointAngle', 'centerOfMass')
 
     clear data mvnx temp 
 
