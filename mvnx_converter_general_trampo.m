@@ -3,6 +3,7 @@ function [data] = mvnx_converter_general_trampo(mvnx, file_dir, file_name, Subje
     %trim unwanted information
     temp = mvnx.subject.frames.frame;
     temp = temp(4:end); %get rid of unwanted fields
+    frameRate = mvnx.subject.frameRate;
     % fields = { 'tc' , 'ms', 'type', 'index', 'footContacts', 'jointAngleXZY', 'jointAngleErgoXZY', 'jointAngleErgo', 'centerOfMass'}; %fields you would like to remove
     % temp = rmfield(temp, fields); 
 
@@ -44,70 +45,73 @@ function [data] = mvnx_converter_general_trampo(mvnx, file_dir, file_name, Subje
     sensorQLabels=[sensorQLabels{:}];
 
 
-    data(1).orientation=array2table(temp(1).orientation, 'VariableNames', segmentQLabels); %92 columns
+    orientation = temp(1).orientation; %92 columns
 
-    data(1).position=array2table(temp(1).position, 'VariableNames', segmentLabels); %69 columns     
-    data(1).velocity=array2table(temp(1).velocity, 'VariableNames', segmentLabels);
-    data(1).acceleration=array2table(temp(1).acceleration, 'VariableNames', segmentLabels);
-    data(1).angularVelocity=array2table(temp(1).angularVelocity, 'VariableNames', segmentLabels);
-    data(1).angularAcceleration=array2table(temp(1).angularAcceleration, 'VariableNames', segmentLabels);
+    position = temp(1).position; %69 columns     
+    velocity = temp(1).velocity;
+    acceleration = temp(1).acceleration;
+    angularVelocity = temp(1).angularVelocity;
+    angularAcceleration = temp(1).angularAcceleration;
 
-    data(1).sensorOrientation=array2table(temp(1).sensorOrientation, 'VariableNames', sensorQLabels); %68?
+    sensorOrientation = temp(1).sensorOrientation; %68?
 
-    data(1).sensorFreeAcceleration=array2table(temp(1).sensorFreeAcceleration,  'VariableNames', sensorLabels);
-    data(1).sensorMagneticField=array2table(temp(1).sensorMagneticField,  'VariableNames', sensorLabels); %51
+    sensorFreeAcceleration = temp(1).sensorFreeAcceleration;
+    sensorMagneticField = temp(1).sensorMagneticField; %51
 
-    data(1).jointAngle=array2table(temp(1).jointAngle,  'VariableNames', jointLabels); %66
-    data(1).centerOfMass=array2table(temp(1).centerOfMass);
+    jointAngle = temp(1).jointAngle; %66
+    centerOfMass = temp(1).centerOfMass;
     
-    data(1).time = temp(1).time;
-    data(1).index = temp(1).index;
-    data(1).ms = temp(1).ms;
+    time = temp(1).time;
+    index = temp(1).index;
+    ms = temp(1).ms;
 
     for j=2:length(temp)
 
-        data.orientation=[data.orientation; array2table(temp(j).orientation, 'VariableNames', segmentQLabels)];
+         orientation=[orientation;  temp(j).orientation];
 
-        data.position=[data.position; array2table(temp(j).position, 'VariableNames', segmentLabels)];
-        data.velocity=[data.velocity; array2table(temp(j).velocity, 'VariableNames', segmentLabels)];
-        data.acceleration=[data.acceleration; array2table(temp(j).acceleration, 'VariableNames', segmentLabels)];
-        data.angularVelocity=[data.angularVelocity; array2table(temp(j).angularVelocity, 'VariableNames', segmentLabels)];
-        data.angularAcceleration=[data.angularAcceleration; array2table(temp(j).angularAcceleration, 'VariableNames', segmentLabels)];
+         position=[position;  temp(j).position];
+         velocity=[velocity;  temp(j).velocity];
+         acceleration=[acceleration;  temp(j).acceleration];
+         angularVelocity=[angularVelocity;  temp(j).angularVelocity];
+         angularAcceleration=[angularAcceleration;  temp(j).angularAcceleration];
 
-        data.sensorFreeAcceleration=[data.sensorFreeAcceleration; array2table(temp(j).sensorFreeAcceleration, 'VariableNames', sensorLabels)];
-        data.sensorMagneticField=[data.sensorMagneticField; array2table(temp(j).sensorMagneticField, 'VariableNames', sensorLabels)];
+         sensorFreeAcceleration=[sensorFreeAcceleration;  temp(j).sensorFreeAcceleration];
+         sensorMagneticField=[sensorMagneticField;  temp(j).sensorMagneticField];
 
-        data.sensorOrientation=[data.sensorOrientation; array2table(temp(j).sensorOrientation, 'VariableNames', sensorQLabels)];
+         sensorOrientation=[sensorOrientation;  temp(j).sensorOrientation];
 
-        data.jointAngle=[data.jointAngle; array2table(temp(j).jointAngle, 'VariableNames', jointLabels)];
-        data.centerOfMass=[data.centerOfMass; array2table(temp(j).centerOfMass)];
+         jointAngle=[jointAngle;  temp(j).jointAngle];
+         centerOfMass=[centerOfMass;  temp(j).centerOfMass];
         
-        data.time = [data.time; temp(j).time];
-        data.index = [data.index; temp(j).index];
-        data.ms = [data.ms; temp(j).ms];
+         time = [time; temp(j).time];
+         index = [index; temp(j).index];
+         ms = [ms; temp(j).ms];
 
     end
     
 
     %% Add metadata 
-
-    time = data.time;
-    index = data.index;
-    ms = data.ms;
-    frameRate = mvnx.subject.frameRate;
-    orientation = data.orientation;
-    velocity = data.velocity;
-    acceleration = data.acceleration;
-    angularVelocity = data.angularVelocity;
-    angularAcceleration = data.angularAcceleration;
-    sensorFreeAcceleration = data.sensorFreeAcceleration;
-    sensorOrientation = data.sensorOrientation;
-    jointAngle = data.jointAngle;
-    centerOfMass = data.centerOfMass;
     
+    new_folder_name = [file_dir, '/', file_name(1:end-5)];
+
+    eval(sprintf("mkdir %s", new_folder_name))
     fileOut = ([file_dir '/' file_name(1:end-5)]);
 
-    save( fileOut, 'Subject_name', 'Move_name', 'frameRate', 'time', 'index', 'ms', 'orientation', 'velocity', 'acceleration', 'angularVelocity', 'angularAcceleration', 'sensorFreeAcceleration', 'sensorOrientation', 'jointAngle', 'centerOfMass')
+    save( [new_folder_name, '/', 'Subject_name.mat'], 'Subject_name')
+    save( [new_folder_name, '/', 'Move_name.mat'], 'Move_name')
+    save( [new_folder_name, '/', 'frameRate.mat'], 'frameRate')
+    save( [new_folder_name, '/', 'time.mat'], 'time')
+    save( [new_folder_name, '/', 'index.mat'], 'index')
+    save( [new_folder_name, '/', 'ms.mat'], 'ms')
+    save( [new_folder_name, '/', 'orientation.mat'], 'orientation')
+    save( [new_folder_name, '/', 'velocity.mat'], 'velocity')
+    save( [new_folder_name, '/', 'acceleration.mat'], 'acceleration')
+    save( [new_folder_name, '/', 'angularVelocity.mat'], 'angularVelocity')
+    save( [new_folder_name, '/', 'angularAcceleration.mat'], 'angularAcceleration')
+    save( [new_folder_name, '/', 'sensorFreeAcceleration.mat'], 'sensorFreeAcceleration')
+    save( [new_folder_name, '/', 'sensorOrientation.mat'], 'sensorOrientation')
+    save( [new_folder_name, '/', 'jointAngle.mat'], 'jointAngle')
+    save( [new_folder_name, '/', 'centerOfMass.mat'], 'centerOfMass')
 
     clear data mvnx temp 
 
