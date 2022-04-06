@@ -2,11 +2,23 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle
+import scipy
 import scipy.io as sio
 from scipy import signal
 from IPython import embed
 import pandas as pd
+import biorbd
+import bioviz
 
+
+model_path = "/home/user/Documents/Programmation/gaze_trajectory_Pupil_Xsens/models/GuSe_model.bioMod"
+
+file_dir = '/home/user/Documents/Programmation/gaze_trajectory_Pupil_Xsens/XsensData/'
+# file_dir = '/home/fbailly/Documents/Programmation/gaze_trajectory_Pupil_Xsens/XsensData/'
+file_name = 'Test_17032021-003/'
+
+# eye_tracking_data_path = '/home/fbailly/Documents/Programmation/gaze_trajectory_Pupil_Xsens/PupilData/2021-08-18_13-12-52-de913cc7/'
+eye_tracking_data_path = '/home/user/Documents/Programmation/gaze_trajectory_Pupil_Xsens/PupilData/2021-08-18_13-12-52-de913cc7/'
 
 ############################### Load Xsens data ##############################################
 
@@ -73,9 +85,7 @@ sensors_Qlabels = ['Pelvis_w', 'Pelvis_i', 'Pelvis_j', 'Pelvis_k', 'T8_w', 'T8_i
                    'LeftUpperLeg_k', 'LeftLowerLeg_w', 'LeftLowerLeg_i', 'LeftLowerLeg_j', 'LeftLowerLeg_k',
                    'LeftFoot_w', 'LeftFoot_i', 'LeftFoot_j', 'LeftFoot_k'] # 68
 
-file_dir = '/home/user/Documents/Programmation/gaze_trajectory_Pupil_Xsens/XsensData/'
-# file_dir = '/home/fbailly/Documents/Programmation/gaze_trajectory_Pupil_Xsens/XsensData/'
-file_name = 'Test_17032021-003/'
+
 Xsens_Subject_name = sio.loadmat(file_dir + file_name + 'Subject_name.mat')["Subject_name"]
 Xsens_Move_name = sio.loadmat(file_dir + file_name + 'Move_name.mat')["Move_name"]
 Xsens_Subject_name = sio.loadmat(file_dir + file_name + 'Subject_name.mat')["Subject_name"]
@@ -84,6 +94,7 @@ Xsens_time = sio.loadmat(file_dir + file_name + 'time.mat')["time"]
 Xsens_index = sio.loadmat(file_dir + file_name + 'index.mat')["index"]
 Xsens_ms = sio.loadmat(file_dir + file_name + 'ms.mat')["ms"]
 
+
 # Xsens_orientation = sio.loadmat(file_dir + file_name + 'orientation.mat')
 Xsens_velocity = sio.loadmat(file_dir + file_name + 'velocity.mat')["velocity"]
 # Xsens_acceleration = sio.loadmat(file_dir + file_name + 'acceleration.mat')["acceleration"]
@@ -91,16 +102,16 @@ Xsens_velocity = sio.loadmat(file_dir + file_name + 'velocity.mat')["velocity"]
 # Xsens_angularAcceleration = sio.loadmat(file_dir + file_name + 'angularAcceleration.mat')["angularAcceleration"]
 Xsens_sensorFreeAcceleration = sio.loadmat(file_dir + file_name + 'sensorFreeAcceleration.mat')["sensorFreeAcceleration"]
 # Xsens_sensorOrientation = sio.loadmat(file_dir + file_name + 'sensorOrientation.mat')["sensorOrientation"]
-# Xsens_jointAngle = sio.loadmat(file_dir + file_name + 'jointAngle.mat')["jointAngle"]
-# Xsens_centerOfMass = sio.loadmat(file_dir + file_name + 'centerOfMass.mat')["centerOfMass"]
+Xsens_jointAngle = sio.loadmat(file_dir + file_name + 'jointAngle.mat')["jointAngle"]
+Xsens_centerOfMass = sio.loadmat(file_dir + file_name + 'centerOfMass.mat')["centerOfMass"]
 
 
+FLAG_SYNCHRO_PLOTS = False
+FLAG_COM_PLOTS = True
 
 
 ############################### Load Pupil data ############################################################
 
-# eye_tracking_data_path = '/home/fbailly/Documents/Programmation/gaze_trajectory_Pupil_Xsens/PupilData/2021-08-18_13-12-52-de913cc7/'
-eye_tracking_data_path = '/home/user/Documents/Programmation/gaze_trajectory_Pupil_Xsens/PupilData/2021-08-18_13-12-52-de913cc7/'
 filename_gaze = eye_tracking_data_path  + 'gaze.csv'
 filename_imu = eye_tracking_data_path  + 'imu.csv'
 filename_timestamps = eye_tracking_data_path + 'world_timestamps.csv'
@@ -155,7 +166,7 @@ csv_imu = csv_imu[np.nonzero(csv_imu[:, 0])[0], :]
 
 moving_average_window_size = 10 # nombre d'éléments à prendre de chaque bord
 csv_imu_averaged = np.zeros((len(csv_imu), 3))
-for j in range(3):
+for j in range(39, 42): ############ 3
     for i in range(len(csv_imu)):
         if i < moving_average_window_size:
             csv_imu_averaged[i, j] = np.mean(csv_imu[:2 * i + 1, j + 4])
@@ -191,11 +202,21 @@ for j in range(3):
 csv_imu_averaged_norm = np.linalg.norm(csv_imu_averaged, axis=1)
 Xsens_sensorFreeAcceleration_averaged_norm = np.linalg.norm(Xsens_sensorFreeAcceleration_averaged, axis=1)
 
-plt.figure()
-plt.plot(csv_imu_averaged_norm, '-b', label="Pupil")
-plt.plot(Xsens_sensorFreeAcceleration_averaged_norm, '-r', label="Xsens")
-plt.legend()
-plt.show()
+if FLAG_SYNCHRO_PLOTS:
+    plt.figure()
+    plt.plot(csv_imu_averaged_norm, '-b', label="Pupil")
+    plt.plot(Xsens_sensorFreeAcceleration_averaged_norm, '-r', label="Xsens")
+    plt.legend()
+    plt.show()
+
+    # pied
+    fig, axs = plt.subplots(3, 1)
+    axs[0].plot(Xsens_sensorFreeAcceleration_averaged[:, 39])
+    axs[1].plot(Xsens_sensorFreeAcceleration_averaged[:, 40])
+    axs[2].plot(Xsens_sensorFreeAcceleration_averaged[:, 41])
+    plt.legend()
+    plt.show()
+
 
 
 time_vector_pupil = (csv_imu[:, 0] - csv_imu[0, 0])/1e9
@@ -216,19 +237,15 @@ norm_accelaration_xsens = xsens_interp(time_vector_xsens_interp)
 # plt.legend()
 # plt.show()
 
-
-Pupil_idx = np.where(np.logical_and(time_vector_pupil_interp > 11.27 - 0.2, time_vector_pupil_interp < 26.565 + 0.2))
-Xsens_idx = np.where(np.logical_and(time_vector_xsens_interp > 10.63 - 0.2, time_vector_xsens_interp < 25.83 + 0.2))
-
-norm_acceleration_xsens_croped = norm_accelaration_xsens # [Xsens_idx]
-norm_acceleration_pupil_croped = norm_accelaration_pupil # [Pupil_idx]
+norm_acceleration_xsens_croped = norm_accelaration_xsens
+norm_acceleration_pupil_croped = norm_accelaration_pupil
 
 correlation_sum = np.array([])
 glide_shift = 800
 if len(norm_acceleration_xsens_croped) > len(norm_acceleration_pupil_croped):  # Xsens > Pupil
     for i in range(-glide_shift , 0):
 
-        current_correlation = np.mean(np.abs(numpy.correlate(norm_acceleration_xsens_croped[:len(norm_acceleration_pupil_croped)+i],
+        current_correlation = np.mean(np.abs(np.correlate(norm_acceleration_xsens_croped[:len(norm_acceleration_pupil_croped)+i],
                                        norm_acceleration_pupil_croped[-i:len(norm_acceleration_xsens_croped)],
                                        mode='valid')))
         correlation_sum = np.hstack((correlation_sum, current_correlation))
@@ -236,53 +253,130 @@ if len(norm_acceleration_xsens_croped) > len(norm_acceleration_pupil_croped):  #
     length_diff = len(norm_acceleration_xsens_croped) - len(norm_acceleration_pupil_croped)
     for i in range(0, length_diff):
 
-        current_correlation = np.mean(np.abs(numpy.correlate(norm_acceleration_xsens_croped[i : len(norm_acceleration_pupil_croped) + i],
+        current_correlation = np.mean(np.abs(np.correlate(norm_acceleration_xsens_croped[i : len(norm_acceleration_pupil_croped) + i],
                                        norm_acceleration_pupil_croped,
                                        mode='valid')))
         correlation_sum = np.hstack((correlation_sum, current_correlation))
 
     for i in range(length_diff, length_diff + glide_shift ):
 
-        current_correlation = np.mean(np.abs(numpy.correlate(norm_acceleration_xsens_croped[i:],
+        current_correlation = np.mean(np.abs(np.correlate(norm_acceleration_xsens_croped[i:],
                                        norm_acceleration_pupil_croped[:len(norm_acceleration_pupil_croped)-i],
                                        mode='valid')))
         correlation_sum = np.hstack((correlation_sum, current_correlation))
 
 else:
     for i in range(-glide_shift , 0):
-        current_correlation = np.mean(np.abs(numpy.correlate(norm_acceleration_pupil_croped[:len(norm_acceleration_xsens_croped)+i],
+        current_correlation = np.mean(np.abs(np.correlate(norm_acceleration_pupil_croped[:len(norm_acceleration_xsens_croped)+i],
                                        norm_acceleration_xsens_croped[-i:len(norm_acceleration_pupil_croped)],
                                        mode='valid')))
         correlation_sum = np.hstack((correlation_sum, current_correlation))
 
     length_diff = len(norm_acceleration_pupil_croped) - len(norm_acceleration_xsens_croped)
     for i in range(0, length_diff):
-        current_correlation = np.mean(np.abs(numpy.correlate(norm_acceleration_pupil_croped[i : len(norm_acceleration_xsens_croped) + i],
+        current_correlation = np.mean(np.abs(np.correlate(norm_acceleration_pupil_croped[i : len(norm_acceleration_xsens_croped) + i],
                                        norm_acceleration_xsens_croped,
                                        mode='valid')))
         correlation_sum = np.hstack((correlation_sum, current_correlation))
 
     for i in range(length_diff, length_diff + glide_shift ):
-        current_correlation = np.mean(np.abs(numpy.correlate(norm_acceleration_pupil_croped[i:],
+        current_correlation = np.mean(np.abs(np.correlate(norm_acceleration_pupil_croped[i:],
                                        norm_acceleration_xsens_croped[: len(norm_acceleration_xsens_croped) -i + length_diff],
                                        mode='valid')))
         correlation_sum = np.hstack((correlation_sum, current_correlation))
 
-plt.figure()
-plt.plot(correlation_sum)
-plt.show()
+if FLAG_SYNCHRO_PLOTS:
+    plt.figure()
+    plt.plot(correlation_sum)
+    plt.show()
 
 idx_max = np.argmax(correlation_sum) - glide_shift
 
-plt.figure()
-if len(norm_acceleration_xsens_croped) > len(norm_acceleration_pupil_croped):  # Xsens > Pupil
-    plt.plot(np.arange(idx_max, idx_max + len(norm_acceleration_pupil_croped)), norm_acceleration_pupil_croped, '-r', label='Pupil')
-    plt.plot(norm_acceleration_xsens_croped, '-b', label='Xsens')
-else:
-    plt.plot(norm_acceleration_pupil_croped, '-r', label='Pupil')
-    plt.plot(np.arange(idx_max, idx_max + len(norm_acceleration_xsens_croped)), norm_acceleration_xsens_croped, '-b', label='Xsens')
-plt.legend()
-plt.show()
+if FLAG_SYNCHRO_PLOTS:
+    plt.figure()
+    if len(norm_acceleration_xsens_croped) > len(norm_acceleration_pupil_croped):  # Xsens > Pupil
+        plt.plot(np.arange(idx_max, idx_max + len(norm_acceleration_pupil_croped)), norm_acceleration_pupil_croped, '-r', label='Pupil')
+        plt.plot(norm_acceleration_xsens_croped, '-b', label='Xsens')
+    else:
+        plt.plot(norm_acceleration_pupil_croped, '-r', label='Pupil')
+        plt.plot(np.arange(idx_max, idx_max + len(norm_acceleration_xsens_croped)), norm_acceleration_xsens_croped, '-b', label='Xsens')
+    plt.legend()
+    plt.show()
+
+
+################################# COM ##########################################
+
+if FLAG_COM_PLOTS:
+    labels_CoM = ["X", "Y", "Z", "vitesse X", "vitesse Y", "vitesse Z", "acc X", "acc Y", "acc Z"]
+    plt.figure()
+    for i in range(3):
+        plt.plot(Xsens_centerOfMass[:, i], label=f'{labels_CoM[i]}')
+    plt.legend()
+    plt.show()
+
+    peaks_max, _ = signal.find_peaks(Xsens_centerOfMass[:, 5], prominence=(0.1, None))
+    peaks_min, _ = signal.find_peaks(-Xsens_centerOfMass[:, 5], prominence=(0.1, None))
+
+    peaks_total = np.sort(np.hstack((peaks_min, peaks_max)))
+
+    plt.figure()
+    for i in range(3, 6):
+        plt.plot(time_vector_xsens, Xsens_centerOfMass[:, i], label=f'{labels_CoM[i]}')
+        if i == 5:
+            plt.plot(time_vector_xsens[peaks_max], Xsens_centerOfMass[peaks_max, 5], 'xg')
+            plt.plot(time_vector_xsens[peaks_min], Xsens_centerOfMass[peaks_min, 5], 'xg')
+            for j in range(len(peaks_total)-1):
+                x_linregress = np.reshape(time_vector_xsens[peaks_total[j]:peaks_total[j+1]], (len(time_vector_xsens[peaks_total[j]:peaks_total[j+1]]), ))
+                slope, intercept, _, _, _ = scipy.stats.linregress(x_linregress,
+                                                       Xsens_centerOfMass[peaks_total[j] : peaks_total[j+1], 5])
+                plt.plot(x_linregress,
+                         intercept + slope * x_linregress,
+                         '--k', alpha=0.5)
+                print("slope : ", slope)
+
+    plt.legend()
+    plt.show()
+
+
+    plt.figure()
+    plt.plot(time_vector_xsens, Xsens_centerOfMass[:, 5], label='acceleration CoM Z')
+    plt.plot(time_vector_xsens[peaks_max], Xsens_centerOfMass[peaks_max, 5], 'xg')
+    plt.plot(time_vector_xsens[peaks_min], Xsens_centerOfMass[peaks_min, 5], 'xg')
+    for j in range(len(peaks_total)-1):
+        x_linregress = np.reshape(time_vector_xsens[peaks_total[j]:peaks_total[j+1]], (len(time_vector_xsens[peaks_total[j]:peaks_total[j+1]]), ))
+        slope, intercept, _, _, _ = scipy.stats.linregress(x_linregress,
+                                               Xsens_centerOfMass[peaks_total[j] : peaks_total[j+1], 5])
+        plt.plot(x_linregress,
+                 intercept + slope * x_linregress,
+                 '--k', alpha=0.5)
+    plt.plot(time_vector_xsens, Xsens_sensorFreeAcceleration_averaged_norm, '-r', label="norm acceleration tete IMU")
+
+    plt.legend()
+    plt.show()
+
+    plt.figure()
+    for i in range(6, 9):
+        plt.plot(Xsens_centerOfMass[:, i], label=f'{labels_CoM[i]}')
+    plt.legend()
+    plt.show()
+
+embed()
+
+# Animation
+
+embed()
+m = biorbd.Model(model_path)
+
+b = bioviz.Viz(model_path)
+b.load_movement(Xsens_jointAngle)
+b.exec()
+
+
+
+
+
+
+
 
 
 
