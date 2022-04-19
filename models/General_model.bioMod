@@ -1,0 +1,250 @@
+version    4
+
+variables
+	$ body_height 1
+	$ shoulder_height 1
+	$ hip_height 1
+	$ knee_height 1
+	$ ankle_height 1
+	$ foot_length 1
+	$ shoulder_width 1
+	$ elbow_span 1
+	$ wrist_span 1
+	$ arm_span 1
+
+
+
+RightUpperLeg_x
+RightLowerLeg_x
+RightFoot_x
+LeftUpperLeg_x
+LeftLowerLeg_x
+LeftFoot_x
+
+
+
+segment	Pelvis
+	translations	xyz
+	rotations	xyz
+	mass	1
+	inertia
+		1	0	0
+		0	1	0
+		0	0	1
+	com	0	0	0
+endsegment
+
+segment	T8
+	parent	Pelvis
+	rotations	xyz
+	rtinmatrix 0
+	rt 0 0 0 xyz 0 0 0.5*(shoulder_height-hip_height) //////A voir
+	mass	1
+	inertia
+		1	0	0
+		0	1	0
+		0	0	1
+	com	0	0	0
+endsegment
+
+segment	Head
+	parent	T8
+	rotations	xyz
+	rtinmatrix 0
+	rt 0 0 0 xyz 0 0 1/3*(body_height-shoulder_height) //////A voir
+	mass	1
+	inertia
+		1	0	0
+		0	1	0
+		0	0	1
+	com	0	0	0
+endsegment
+
+segment	RightShoulder
+	parent	T8
+	rotations	xyz
+	rtinmatrix 0
+	rt 0 0 0 xyz 0 0 0.5*(shoulder_height-hip_height) //////A voir
+	mass	1
+	inertia
+		1	0	0
+		0	1	0
+		0	0	1
+	com	0	0	0
+endsegment
+
+segment	RightUpperArm
+	parent	RightShoulder
+	rotations	xyz
+	rtinmatrix 0
+	rt 0 0 0 xyz -(elbow_span-shoulder_span)/2 0 0
+	mass	1
+	inertia
+		1	0	0
+		0	1	0
+		0	0	1
+	com	0	0	0
+endsegment
+
+segment	RightForeArm
+	parent	RightUpperArm
+	rotations	xyz
+	rtinmatrix 0
+	rt 0 0 0 xyz -(wrist_span-elbow_span)/2 0 0
+	mass	1
+	inertia
+		1	0	0
+		0	1	0
+		0	0	1
+	com	0	0	0
+endsegment
+
+segment	RightHand
+	parent	RightForeArm
+	rotations	xyz
+	rtinmatrix 0
+	rt 0 0 0 xyz -(arm_span-wrist_span)/2 0 0
+	mass	1
+	inertia
+		1	0	0
+		0	1	0
+		0	0	1
+	com	0	0	0
+endsegment
+
+segment	LeftShoulder
+	parent	T8
+	rotations	xyz
+	rtinmatrix 0
+	rt 0 0 0 xyz 0 0 0.5*(shoulder_height-hip_height)
+	mass	1
+	inertia
+		1	0	0
+		0	1	0
+		0	0	1
+	com	0	0	0
+endsegment
+
+segment	LeftUpperArm
+	parent	LeftShoulder
+	rotations	xyz
+	rtinmatrix 0
+	rt 0 0 0 xyz (elbow_span-shoulder_span)/2 0 0
+	mass	1
+	inertia
+		1	0	0
+		0	1	0
+		0	0	1
+	com	0	0	0
+endsegment
+
+segment	LeftForeArm
+	parent	LeftUpperArm
+	rotations	xyz
+	rtinmatrix 0
+	rt 0 0 0 xyz (wrist_span-elbow_span)/2 0 0
+	mass	1
+	inertia
+		1	0	0
+		0	1	0
+		0	0	1
+	com	0	0	0
+endsegment
+
+segment	LeftHand
+	parent	LeftForeArm
+	rotations	xyz
+	rtinmatrix 0
+	rt 0 0 0 xyz -(arm_span-wrist_span)/2 0 0
+	mass	1
+	inertia
+		1	0	0
+		0	1	0
+		0	0	1
+	com	0	0	0
+endsegment
+
+segment	RightUpperLeg
+	parent	Pelvis
+	rotations	xyz
+	rtinmatrix 0
+	rt 0 0 0 xyz -hip_width/2 0 0
+	mass	1
+	inertia
+		1	0	0
+		0	1	0
+		0	0	1
+	com	0	0	0
+endsegment
+
+segment	RightLowerLeg
+	parent	RightUpperLeg
+	rotations	xyz
+	rtinmatrix 0
+	rt 0 0 0 xyz 0 0 -(hip_height-knee_height)
+	mass	1
+	inertia
+		1	0	0
+		0	1	0
+		0	0	1
+	com	0	0	0
+endsegment
+
+segment	RightFoot
+	parent	RightLowerLeg
+	rotations	xyz
+	rtinmatrix 0
+	rt 0 0 0 xyz 0 0 -(knee_height-ankle_height)
+	mass	1
+	inertia
+		1	0	0
+		0	1	0
+		0	0	1
+	com	0	0	0
+endsegment
+
+segment	LeftUpperLeg
+	parent	Pelvis
+	rotations	xyz
+	rtinmatrix 0
+	rt 0 0 0 xyz hip_width/2 0 0
+	mass	1
+	inertia
+		1	0	0
+		0	1	0
+		0	0	1
+	com	0	0	0
+endsegment
+
+segment	LeftLowerLeg
+	parent	LeftUpperLeg
+	rotations	xyz
+	rtinmatrix 0
+	rt 0 0 0 xyz 0 0 -(hip_height-knee_height)
+	mass	1
+	inertia
+		1	0	0
+		0	1	0
+		0	0	1
+	com	0	0	0
+endsegment
+
+segment	LeftFoot
+	parent	LeftLowerLeg
+	rotations	xyz
+	rtinmatrix 0
+	rt 0 0 0 xyz 0 0 -(knee_height-ankle_height)
+	mass	1
+	inertia
+		1	0	0
+		0	1	0
+		0	0	1
+	com	0	0	0
+endsegment
+
+
+
+
+
+
+

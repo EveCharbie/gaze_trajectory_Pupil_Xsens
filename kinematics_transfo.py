@@ -365,6 +365,7 @@ embed()
 # Animation
 
 embed()
+
 m = biorbd.Model(model_path)
 
 b = bioviz.Viz(model_path)

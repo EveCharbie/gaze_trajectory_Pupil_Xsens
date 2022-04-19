@@ -4,7 +4,8 @@
 
 clear all; close all; clc;
 
-file_dir = '/home/fbailly/Documents/Programmation/gaze_trajectory_Pupil_Xsens/XsensData';
+file_dir = '/home/user/Documents/Programmation/gaze_trajectory_Pupil_Xsens/XsensData';
+% file_dir = '/home/fbailly/Documents/Programmation/gaze_trajectory_Pupil_Xsens/XsensData';
 file_name = 'Test_17032021-003.mvnx';
 
 mvnx = load_mvnx([file_dir, '/' file_name])
