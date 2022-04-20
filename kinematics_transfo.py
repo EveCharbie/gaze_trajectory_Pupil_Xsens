@@ -9,16 +9,15 @@ from IPython import embed
 import pandas as pd
 import biorbd
 import bioviz
+import mpl_toolkits.mplot3d.axes3d as p3
+import matplotlib.animation as animation
 
+model_path = "models/GuSe_model.bioMod"
 
-model_path = "/home/user/Documents/Programmation/gaze_trajectory_Pupil_Xsens/models/GuSe_model.bioMod"
-
-file_dir = '/home/user/Documents/Programmation/gaze_trajectory_Pupil_Xsens/XsensData/'
-# file_dir = '/home/fbailly/Documents/Programmation/gaze_trajectory_Pupil_Xsens/XsensData/'
+file_dir = 'XsensData/'
 file_name = 'Test_17032021-003/'
 
-# eye_tracking_data_path = '/home/fbailly/Documents/Programmation/gaze_trajectory_Pupil_Xsens/PupilData/2021-08-18_13-12-52-de913cc7/'
-eye_tracking_data_path = '/home/user/Documents/Programmation/gaze_trajectory_Pupil_Xsens/PupilData/2021-08-18_13-12-52-de913cc7/'
+eye_tracking_data_path = 'PupilData/2021-08-18_13-12-52-de913cc7/'
 
 ############################### Load Xsens data ##############################################
 
@@ -94,8 +93,8 @@ Xsens_time = sio.loadmat(file_dir + file_name + 'time.mat')["time"]
 Xsens_index = sio.loadmat(file_dir + file_name + 'index.mat')["index"]
 Xsens_ms = sio.loadmat(file_dir + file_name + 'ms.mat')["ms"]
 
-
-# Xsens_orientation = sio.loadmat(file_dir + file_name + 'orientation.mat')
+Xsens_position = sio.loadmat(file_dir + file_name + 'position.mat')["position"]
+# Xsens_orientation = sio.loadmat(file_dir + file_name + 'orientation.mat')["orientation"]
 Xsens_velocity = sio.loadmat(file_dir + file_name + 'velocity.mat')["velocity"]
 # Xsens_acceleration = sio.loadmat(file_dir + file_name + 'acceleration.mat')["acceleration"]
 # Xsens_angularVelocity = sio.loadmat(file_dir + file_name + 'angularVelocity.mat')["angularVelocity"]
@@ -104,10 +103,73 @@ Xsens_sensorFreeAcceleration = sio.loadmat(file_dir + file_name + 'sensorFreeAcc
 # Xsens_sensorOrientation = sio.loadmat(file_dir + file_name + 'sensorOrientation.mat')["sensorOrientation"]
 Xsens_jointAngle = sio.loadmat(file_dir + file_name + 'jointAngle.mat')["jointAngle"]
 Xsens_centerOfMass = sio.loadmat(file_dir + file_name + 'centerOfMass.mat')["centerOfMass"]
+Xsens_global_JCS_positions = sio.loadmat(file_dir + file_name + 'global_JCS_positions.mat')["global_JCS_positions"]
+Xsens_global_JCS_positions = np.reshape(Xsens_global_JCS_positions, (69, ))
+
+links = np.array([[0, 1],
+                  [1, 2],
+                  [2, 3],
+                  [3, 4],
+                  [4, 5],
+                  [5, 6],
+                  [4, 7],
+                  [7, 8],
+                  [8, 9],
+                  [9, 10],
+                  [4, 11],
+                  [11, 12],
+                  [12, 13],
+                  [13, 14],
+                  [0, 15],
+                  [15, 16],
+                  [16, 17],
+                  [17, 18],
+                  [0, 19],
+                  [19, 20],
+                  [20, 21],
+                  [21, 22]])
+
+def animate(Xsens_position, links):
+
+    def update(i, Xsens_position, lines, links):
+
+        for i_line, line in enumerate(lines):
+            line[0].set_data(np.array([Xsens_position[i][3 * links[i_line, 0]], Xsens_position[i][3 * links[i_line, 1]] ]), np.array([Xsens_position[i][3 * links[i_line, 0] + 1], Xsens_position[i][3 * links[i_line, 1] + 1] ]))
+            line[0].set_3d_properties(np.array([Xsens_position[i][3 * links[i_line, 0] + 2], Xsens_position[i][3 * links[i_line, 1] + 2] ]))
+        return lines
+
+    fig = plt.figure()
+    ax = p3.Axes3D(fig)
+
+    points = [ax.plot(0, 0, 0, '.k') for _ in range(len(links))]
+    lines = [ax.plot(np.array([0, 0]), np.array([0, 0]), np.array([0, 0]), '-k') for _ in range(len(links))]
+
+    # Setting the axes properties
+    ax.set_xlim3d([-1.0, 1.0])
+    ax.set_xlabel('X')
+
+    ax.set_ylim3d([-1.0, 1.0])
+    ax.set_ylabel('Y')
+
+    ax.set_zlim3d([-1.0, 1.0])
+    ax.set_zlabel('Z')
+
+    ax.set_title('3D Test')
+
+    # Creating the Animation object
+    anim = animation.FuncAnimation(fig, update, frames=range(len(Xsens_position)), fargs=(Xsens_position, lines, links), blit=False)
+
+    anim.save(f'Results/{Xsens_Subject_name[0]}/{file_name[:-1]}.mp4', fps=60, extra_args=['-vcodec', 'libx264'])
+
+    # plt.show()
+
+    return
+
+animate(Xsens_position, links)
 
 
 FLAG_SYNCHRO_PLOTS = False
-FLAG_COM_PLOTS = True
+FLAG_COM_PLOTS = False # True
 
 
 ############################### Load Pupil data ############################################################
@@ -166,14 +228,14 @@ csv_imu = csv_imu[np.nonzero(csv_imu[:, 0])[0], :]
 
 moving_average_window_size = 10 # nombre d'éléments à prendre de chaque bord
 csv_imu_averaged = np.zeros((len(csv_imu), 3))
-for j in range(39, 42): ############ 3
+for j_idx, j in enumerate(range(3)):
     for i in range(len(csv_imu)):
         if i < moving_average_window_size:
-            csv_imu_averaged[i, j] = np.mean(csv_imu[:2 * i + 1, j + 4])
+            csv_imu_averaged[i, j_idx] = np.mean(csv_imu[:2 * i + 1, j + 4])
         elif i > (len(csv_imu) - moving_average_window_size - 1):
-            csv_imu_averaged[i, j] = np.mean(csv_imu[-2 * (len(csv_imu) - i) + 1:, j + 4])
+            csv_imu_averaged[i, j_idx] = np.mean(csv_imu[-2 * (len(csv_imu) - i) + 1:, j + 4])
         else:
-            csv_imu_averaged[i, j] = np.mean(csv_imu[i - moving_average_window_size : i + moving_average_window_size + 1, j + 4])
+            csv_imu_averaged[i, j_idx] = np.mean(csv_imu[i - moving_average_window_size : i + moving_average_window_size + 1, j + 4])
 
 
 moving_average_window_size = round(moving_average_window_size / 3)
@@ -189,13 +251,13 @@ for j in range(3):
 
 # plt.figure()
 # plt.plot(csv_imu_averaged, '-', label="averaged")
-# # plt.plot(csv_imu[:, 4:7], ':', label="raw")
+# plt.plot(csv_imu[:, 4:7], ':', label="raw")
 # plt.legend()
 # plt.show()
 #
 # plt.figure()
 # plt.plot(Xsens_sensorFreeAcceleration_averaged, '-', label="averaged")
-# # plt.plot(Xsens_sensorFreeAcceleration[:, 6:9], ':', label="raw")
+# plt.plot(Xsens_sensorFreeAcceleration[:, 6:9], ':', label="raw")
 # plt.legend()
 # plt.show()
 
@@ -360,17 +422,28 @@ if FLAG_COM_PLOTS:
     plt.legend()
     plt.show()
 
-embed()
 
-# Animation
 
-embed()
 
-m = biorbd.Model(model_path)
 
-b = bioviz.Viz(model_path)
-b.load_movement(Xsens_jointAngle)
-b.exec()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

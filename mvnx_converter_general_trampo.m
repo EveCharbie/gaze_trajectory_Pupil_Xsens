@@ -6,6 +6,7 @@ function [data] = mvnx_converter_general_trampo(mvnx, file_dir, file_name, Subje
     frameRate = mvnx.subject.frameRate;
     % fields = { 'tc' , 'ms', 'type', 'index', 'footContacts', 'jointAngleXZY', 'jointAngleErgoXZY', 'jointAngleErgo', 'centerOfMass'}; %fields you would like to remove
     % temp = rmfield(temp, fields); 
+    global_JCS_positions = mvnx.subject.frames.frame(3).position;
 
     for j=1:length(mvnx.subject.segments.segment)
         segmentQLabels{1 + 4*(j-1)} = {[mvnx.subject.segments.segment(j).label, '_w']} ; %23 segmentsx4 =92
@@ -103,6 +104,7 @@ function [data] = mvnx_converter_general_trampo(mvnx, file_dir, file_name, Subje
     save( [new_folder_name, '/', 'time.mat'], 'time')
     save( [new_folder_name, '/', 'index.mat'], 'index')
     save( [new_folder_name, '/', 'ms.mat'], 'ms')
+    save( [new_folder_name, '/', 'position.mat'], 'position')
     save( [new_folder_name, '/', 'orientation.mat'], 'orientation')
     save( [new_folder_name, '/', 'velocity.mat'], 'velocity')
     save( [new_folder_name, '/', 'acceleration.mat'], 'acceleration')
@@ -112,6 +114,7 @@ function [data] = mvnx_converter_general_trampo(mvnx, file_dir, file_name, Subje
     save( [new_folder_name, '/', 'sensorOrientation.mat'], 'sensorOrientation')
     save( [new_folder_name, '/', 'jointAngle.mat'], 'jointAngle')
     save( [new_folder_name, '/', 'centerOfMass.mat'], 'centerOfMass')
+    save( [new_folder_name, '/', 'global_JCS_positions.mat'], 'global_JCS_positions')
 
     clear data mvnx temp 
 

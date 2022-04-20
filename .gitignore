@@ -131,3 +131,11 @@ dmypy.json
 XsensData/
 
 *.m~
+
+models/GuSe_model.bioMod
+
+models/GuSe_model_guidelines.bioMod
+
+models/Test.bioMod
+
+*.mp4

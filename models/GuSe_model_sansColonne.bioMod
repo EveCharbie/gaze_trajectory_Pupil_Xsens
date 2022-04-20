@@ -1,0 +1,279 @@
+version    4
+
+variables
+	$body_height 1.78
+	$shoulder_height 1.425
+	$hip_height 0.945
+	$knee_height 0.53
+	$ankle_height 0.08
+	$foot_length 0.255
+	$hip_width 0.30
+	$shoulder_width 0.405
+	$elbow_span 0.88
+	$wrist_span 1.39
+	$arm_span 1.79
+endvariables
+
+
+segment	Pelvis
+	translations	xyz
+	rotations	xyz
+	mass	1
+	inertia
+		1	0	0
+		0	1	0
+		0	0	1
+	com	0	0	0
+	meshfile boule.stl
+	meshscale $hip_width*10 $hip_width*10 $hip_width*10
+endsegment
+
+segment	T8
+	parent	Pelvis
+	rotations	xyz
+	rtinmatrix 0
+	rt 0 0 0 xyz 0 0 0.5*($shoulder_height+$hip_height*-1) //A voir
+	mass	1
+	inertia
+		1	0	0
+		0	1	0
+		0	0	1
+	com	0	0	0
+	meshfile boule.stl
+	meshscale $hip_width*15 $hip_width*15 ($shoulder_height+$hip_height*-1)*15
+	meshrt 0 0 0 xyz 0 0 0.1
+endsegment
+
+segment	Head
+	parent	T8
+	rotations	xyz
+	rtinmatrix 0
+	rt 0 0 0 xyz 0 0 0.5*($shoulder_height+$hip_height*-1)+0.3*($body_height+$shoulder_height*-1) //A voir
+	mass	1
+	inertia
+		1	0	0
+		0	1	0
+		0	0	1
+	com	0	0	0
+	meshfile boule.stl
+	meshscale 0.8*($body_height+$shoulder_height*-1)*10 0.8*($body_height+$shoulder_height*-1)*10 ($body_height+$shoulder_height*-1)*10
+	meshrt 0 0 0 xyz 0 0 0.5*($body_height+$shoulder_height*-1)
+endsegment
+
+segment	RightShoulder
+	parent	T8
+	rotations	xyz
+	rtinmatrix 0
+	rt 0 0 0 xyz 0 0 0.5*($shoulder_height+$hip_height*-1) //A voir
+	mass	1
+	inertia
+		1	0	0
+		0	1	0
+		0	0	1
+	com	0	0	0
+endsegment
+
+segment	RightUpperArm
+	parent	RightShoulder
+	rotations	xyz
+	rtinmatrix 0
+	rt 0 0 0 xyz -0.5*$shoulder_width 0 0
+	mass	1
+	inertia
+		1	0	0
+		0	1	0
+		0	0	1
+	com	0	0	0
+	meshfile boule.stl
+	meshscale 0.5*($elbow_span+$shoulder_width*-1)*10 1.5 1.5
+	meshrt 0 0 0 xyz -0.25*($elbow_span+$shoulder_width*-1) 0 0
+endsegment
+
+segment	RightForeArm
+	parent	RightUpperArm
+	rotations	xyz
+	rtinmatrix 0
+	rt 0 0 0 xyz -0.5*($elbow_span+$shoulder_width*-1) 0 0
+	mass	1
+	inertia
+		1	0	0
+		0	1	0
+		0	0	1
+	com	0	0	0
+	meshfile boule.stl
+	meshscale 0.5*($wrist_span+$elbow_span*-1)*10 1.5 1.5
+	meshrt 0 0 0 xyz -0.25*($wrist_span+$elbow_span*-1) 0 0
+endsegment
+
+segment	RightHand
+	parent	RightForeArm
+	rotations	xyz
+	rtinmatrix 0
+	rt 0 0 0 xyz ($arm_span+$wrist_span*-1)*-0.5 0 0
+	mass	1
+	inertia
+		1	0	0
+		0	1	0
+		0	0	1
+	com	0	0	0
+	meshfile boule.stl
+	meshscale 0.5*($arm_span+$wrist_span*-1)*10 0.5 1
+	meshrt 0 0 0 xyz  -0.25*($arm_span+$wrist_span*-1) 0 0
+endsegment
+
+segment	LeftShoulder
+	parent	T8
+	rotations	xyz
+	rtinmatrix 0
+	rt 0 0 0 xyz 0 0 0.5*($shoulder_height+$hip_height*-1) //A voir
+	mass	1
+	inertia
+		1	0	0
+		0	1	0
+		0	0	1
+	com	0	0	0
+endsegment
+
+segment	LeftUpperArm
+	parent	LeftShoulder
+	rotations	xyz
+	rtinmatrix 0
+	rt 0 0 0 xyz 0.5*$shoulder_width 0 0
+	mass	1
+	inertia
+		1	0	0
+		0	1	0
+		0	0	1
+	com	0	0	0	
+	meshfile boule.stl
+	meshscale 0.5*($elbow_span+$shoulder_width*-1)*10 1.5 1.5
+	meshrt 0 0 0 xyz 0.25*($elbow_span+$shoulder_width*-1) 0 0
+endsegment
+
+segment	LeftForeArm
+	parent	LeftUpperArm
+	rotations	xyz
+	rtinmatrix 0
+	rt 0 0 0 xyz 0.5*($elbow_span+$shoulder_width*-1) 0 0
+	mass	1
+	inertia
+		1	0	0
+		0	1	0
+		0	0	1
+	com	0	0	0
+	meshfile boule.stl
+	meshscale 0.5*($wrist_span+$elbow_span*-1)*10 1.5 1.5
+	meshrt 0 0 0 xyz 0.25*($wrist_span+$elbow_span*-1) 0 0
+endsegment
+
+segment	LeftHand
+	parent	LeftForeArm
+	rotations	xyz
+	rtinmatrix 0
+	rt 0 0 0 xyz ($arm_span+$wrist_span*-1)*0.5 0 0
+	mass	1
+	inertia
+		1	0	0
+		0	1	0
+		0	0	1
+	com	0	0	0
+	meshfile boule.stl
+	meshscale 0.5*($arm_span+$wrist_span*-1)*10 0.5 1
+	meshrt 0 0 0 xyz  0.25*($arm_span+$wrist_span*-1) 0 0
+endsegment
+
+segment	RightUpperLeg
+	parent	Pelvis
+	rotations	xyz
+	rtinmatrix 0
+	rt 0 0 0 xyz $hip_width*-0.5 0 0
+	mass	1
+	inertia
+		1	0	0
+		0	1	0
+		0	0	1
+	com	0	0	0
+	meshfile boule.stl
+	meshscale 2 2 ($hip_height+$knee_height*-1)*10
+	meshrt 0 0 0 xyz  0 0 -0.5*($hip_height+$knee_height*-1)
+endsegment
+
+segment	RightLowerLeg
+	parent	RightUpperLeg
+	rotations	xyz
+	rtinmatrix 0
+	rt 0 0 0 xyz 0 0 -1*($hip_height+$knee_height*-1)
+	mass	1
+	inertia
+		1	0	0
+		0	1	0
+		0	0	1
+	com	0	0	0
+	meshfile boule.stl
+	meshscale 1.5 1.5 ($knee_height+$ankle_height*-1)*10
+	meshrt 0 0 0 xyz  0 0 -0.5*($knee_height+$ankle_height*-1)
+endsegment
+
+segment	RightFoot
+	parent	RightLowerLeg
+	rotations	xyz
+	rtinmatrix 0
+	rt 0 0 0 xyz 0 0 ($knee_height+$ankle_height*-1)*-1
+	mass	1
+	inertia
+		1	0	0
+		0	1	0
+		0	0	1
+	com	0	0	0
+	meshfile boule.stl
+	meshscale 1 $foot_length*10 1
+	meshrt 0 0 0 xyz  0 $foot_length*0.5 0
+endsegment
+
+segment	LeftUpperLeg
+	parent	Pelvis
+	rotations	xyz
+	rtinmatrix 0
+	rt 0 0 0 xyz $hip_width*0.5 0 0
+	mass	1
+	inertia
+		1	0	0
+		0	1	0
+		0	0	1
+	com	0	0	0
+	meshfile boule.stl
+	meshscale 2 2 ($hip_height+$knee_height*-1)*10
+	meshrt 0 0 0 xyz  0 0 -0.5*($hip_height+$knee_height*-1)
+endsegment
+
+segment	LeftLowerLeg
+	parent	LeftUpperLeg
+	rotations	xyz
+	rtinmatrix 0
+	rt 0 0 0 xyz 0 0 -1*($hip_height+$knee_height*-1)
+	mass	1
+	inertia
+		1	0	0
+		0	1	0
+		0	0	1
+	com	0	0	0
+	meshfile boule.stl
+	meshscale 1.5 1.5 ($knee_height+$ankle_height*-1)*10
+	meshrt 0 0 0 xyz  0 0 -0.5*($knee_height+$ankle_height*-1)
+endsegment
+
+segment	LeftFoot
+	parent	LeftLowerLeg
+	rotations	xyz
+	rtinmatrix 0
+	rt 0 0 0 xyz 0 0 ($knee_height+$ankle_height*-1)*-1
+	mass	1
+	inertia
+		1	0	0
+		0	1	0
+		0	0	1
+	com	0	0	0
+	meshfile boule.stl
+	meshscale 1 $foot_length*10 1
+	meshrt 0 0 0 xyz  0 $foot_length*0.5 0
+endsegment
