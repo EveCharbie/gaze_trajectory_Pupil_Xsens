@@ -87,9 +87,9 @@ def unwrap_gaze_position(gaze_position):
 
     return gaze_position_x_y
 
-
+################### Attention le plafond est 'la heuteur de la toile' trop haut
 # ceiling height = 9.462
-# zero is positioned at the center od the trampoline
+# zero is positioned at the center of the trampoline
 planes_points = [[121 * 0.0254 / 2, 7.193, 0], # trampoline
                  [121 * 0.0254 / 2, 7.193, 0], # wall front
                  [121 * 0.0254 / 2, 7.193, 9.462], # ceiling

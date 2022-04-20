@@ -12,12 +12,14 @@ import bioviz
 import mpl_toolkits.mplot3d.axes3d as p3
 import matplotlib.animation as animation
 
-model_path = "models/GuSe_model.bioMod"
-
 file_dir = 'XsensData/'
 file_name = 'Test_17032021-003/'
 
 eye_tracking_data_path = 'PupilData/2021-08-18_13-12-52-de913cc7/'
+
+############################### Load general data ##############################################
+hip_height = 0 # a changer
+# Load linker .csv
 
 ############################### Load Xsens data ##############################################
 
@@ -106,6 +108,14 @@ Xsens_centerOfMass = sio.loadmat(file_dir + file_name + 'centerOfMass.mat')["cen
 Xsens_global_JCS_positions = sio.loadmat(file_dir + file_name + 'global_JCS_positions.mat')["global_JCS_positions"]
 Xsens_global_JCS_positions = np.reshape(Xsens_global_JCS_positions, (69, ))
 
+
+############################### Load Pupil data ##############################################
+# ....
+start_time = np.array([0])
+end_time = np.array([1.3])
+
+
+
 links = np.array([[0, 1],
                   [1, 2],
                   [2, 3],
@@ -165,7 +175,7 @@ def animate(Xsens_position, links):
 
     return
 
-animate(Xsens_position, links)
+# animate(Xsens_position, links)
 
 
 FLAG_SYNCHRO_PLOTS = False
@@ -423,13 +433,33 @@ if FLAG_COM_PLOTS:
     plt.show()
 
 
+# frames_start = np.array([])
+# frames_stop = np.array([])
+
+if Xsens_position[0][:3] != Xsens_position[100][:3]:
+    raise RunTimeError('Problem the position of the pelvis GCS is not constant, Xsens export was probably not in '
+                       '"no level"')
+
+fixed_hip_position = Xsens_position[0][:3]
+CoM_position_in_pelvis = Xsens_centerOfMass[:, :3]
+
+for i_move in range(len(move)):
+
+    ToF_imove = end_time - start_time
+    CoM_position_in_pelvis_imove = CoM_position_in_pelvis[frames_start : frames_stop]
+    airborn_time = np.linspace(start_time, end_time, frames_stop-frames_start)
+
+    CoM_initial_position = np.array([0, 0, hip_height]) - np.array([0, 0, CoM_position_in_pelvis[frames_start]])
+    CoM_final_position = np.array([0, 0, hip_height]) - np.array([0, 0, CoM_position_in_pelvis[frames_end]])
+    CoM_initial_velocity = (CoM_final_position - CoM_initial_position - 0.5*-9.81*ToF_imove**2) / ToF_imove
+
+    CoM_trajectory_imove = np.zeros((frames_stop - frames_start, 3))
+    CoM_trajectory_imove[:, 2] = CoM_initial_position + CoM_initial_velocity*airborn_time + 0.5*-9.81*airborn_time**2
+
+    hip_trajectory_imove = CoM_trajectory_imove - CoM_position_in_pelvis - fixed_hip_position + hip_height
 
 
-
-
-
-
-
+animate(Xsens_position + hip_trajectory_imove, links)
 
 
 
