@@ -170,21 +170,21 @@ plt.plot(start_of_move_index_image, time_stamps_eye_tracking_index_on_pupil[star
 plt.title("timestaps + start(xr) and end(xg) of move")
 plt.show()
 
-movie_path = "/home/user/Documents/Eye-tracking/PupilData/undistorted_videos/"
-movie_file = movie_path + movie_name + "_undistorted_images.pkl"
-file = open(movie_file, "rb")
-frames = pickle.load(file)
-num_frames = len(frames)
-
-plt.figure()
-plt.imshow(frames[int(start_of_move_index_image[0])])
-plt.title("Take-off frame")
-plt.show()
-
-plt.figure()
-plt.imshow(frames[int(end_of_move_index_image[0])])
-plt.title("Landing frame")
-plt.show()
+# movie_path = "/home/user/Documents/Eye-tracking/PupilData/undistorted_videos/"
+# movie_file = movie_path + movie_name + "_undistorted_images.pkl"
+# file = open(movie_file, "rb")
+# frames = pickle.load(file)
+# num_frames = len(frames)
+#
+# plt.figure()
+# plt.imshow(frames[int(start_of_move_index_image[0])])
+# plt.title("Take-off frame")
+# plt.show()
+#
+# plt.figure()
+# plt.imshow(frames[int(end_of_move_index_image[0])])
+# plt.title("Landing frame")
+# plt.show()
 
 # 2 -> 0: gaze_timestamp
 # 3 -> 1: norm_pos_x
