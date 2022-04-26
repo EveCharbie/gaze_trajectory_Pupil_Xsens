@@ -1,4 +1,4 @@
-
+import biorbd
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle
@@ -8,39 +8,49 @@ from scipy import signal
 from IPython import embed
 import pandas as pd
 # import biorbd
-# import bioviz
+import bioviz
 import mpl_toolkits.mplot3d.axes3d as p3
 import matplotlib.animation as animation
+from os.path import exists
 
 
 ############################### Load general data ##############################################
 file_name = 'Test_17032021-007/'
 
-csv_name = "/home/user/Documents/Programmation/rectangle-labelling/Trials_name_mapping.csv"
+if exists("/home/user"):
+    home_path = "/home/user"
+    file_dir = '/home/user/Documents/Eye-tracking/XsensData/'
+elif exists("/home/fbailly"):
+    home_path = "/home/fbailly"
+    file_dir = "/home/fbailly/Documents/Programmation/gaze_trajectory_Pupil_Xsens/XsensData/"
+
+csv_name = home_path + "/Documents/Programmation/rectangle-labelling/Trials_name_mapping.csv"
 csv_table = np.char.split(pd.read_csv(csv_name, sep='\t').values.astype('str'), sep=',')
 
-movie_path = "/home/user/Documents/Eye-tracking/PupilData/points_labeled/"
+movie_path = home_path + "/Documents/Eye-tracking/PupilData/points_labeled/"
 
 # for i_trial in range(len(csv_table)):
 i_trial = 0
 movie_name = csv_table[i_trial][0][6].replace('.', '_')
 gaze_position_labels = movie_path + movie_name + "_labeling_points.pkl"
-out_path = '/home/user/Documents/Programmation/rectangle-labelling/output/Results'
+out_path = home_path + '/Documents/Programmation/rectangle-labelling/output/Results'
 subject_name = csv_table[i_trial][0][0]
 move_names = csv_table[i_trial][0][1].split(" ")
 move_orientation = [int(x) for x in csv_table[i_trial][0][2].split(" ")]
-eye_tracking_data_path = '/home/user/Documents/Eye-tracking/PupilData/CloudExport/' + csv_table[i_trial][0][5] + '/'
+eye_tracking_data_path = home_path + '/Documents/Eye-tracking/PupilData/CloudExport/' + csv_table[i_trial][0][5] + '/'
 subject_expertise = csv_table[i_trial][0][8]
-hip_height = 1.10  # subject_expertise = csv_table[i_trial][0][9]
-eye_position_devant = 0.10  # subject_expertise = csv_table[i_trial][0][10]
-eye_position_hauteur = 0.20  # subject_expertise = csv_table[i_trial][0][11]
 
 
-file_dir = '/home/user/Documents/Eye-tracking/XsensData/'
+global eye_position_height, eye_position_depth
+csv_name = home_path + f"/Documents/Programmation/rectangle-labelling/output/Results/{subject_name}/{subject_name}_anthropo.csv"
+csv_table = np.char.split(pd.read_csv(csv_name, sep='\t').values.astype('str'), sep=',')
+hip_height = float(csv_table[2][0][1])
+eye_position_height = float(csv_table[11][0][1])
+eye_position_depth = float(csv_table[12][0][1])
 
 ############################### Load Xsens data ##############################################
 
-segment_Q_label = [ 'Pelvis_w', 'Pelvis_i', 'Pelvis_j', 'Pelvis_k', 'L5_w', 'L5_i', 'L5_j', 'L5_k', 'L3_w', 'L3_i',
+segment_Quat_label = [ 'Pelvis_w', 'Pelvis_i', 'Pelvis_j', 'Pelvis_k', 'L5_w', 'L5_i', 'L5_j', 'L5_k', 'L3_w', 'L3_i',
                     'L3_j', 'L3_k', 'T12_w', 'T12_i', 'T12_j', 'T12_k', 'T8_w', 'T8_i', 'T8_j', 'T8_k', 'Neck_w',
                     'Neck_i', 'Neck_j', 'Neck_k', 'Head_w', 'Head_i', 'Head_j', 'Head_k', 'RightShoulder_w',
                     'RightShoulder_i', 'RightShoulder_j', 'RightShoulder_k', 'RightUpperArm_w', 'RightUpperArm_i',
@@ -103,123 +113,6 @@ sensors_Qlabels = ['Pelvis_w', 'Pelvis_i', 'Pelvis_j', 'Pelvis_k', 'T8_w', 'T8_i
                    'LeftUpperLeg_k', 'LeftLowerLeg_w', 'LeftLowerLeg_i', 'LeftLowerLeg_j', 'LeftLowerLeg_k',
                    'LeftFoot_w', 'LeftFoot_i', 'LeftFoot_j', 'LeftFoot_k'] # 68
 
-
-Xsens_Subject_name = sio.loadmat(file_dir + file_name + 'Subject_name.mat')["Subject_name"]
-Xsens_Move_name = sio.loadmat(file_dir + file_name + 'Move_name.mat')["Move_name"]
-Xsens_Subject_name = sio.loadmat(file_dir + file_name + 'Subject_name.mat')["Subject_name"]
-Xsens_frameRate = sio.loadmat(file_dir + file_name + 'frameRate.mat')["frameRate"]
-Xsens_time = sio.loadmat(file_dir + file_name + 'time.mat')["time"]
-Xsens_index = sio.loadmat(file_dir + file_name + 'index.mat')["index"]
-Xsens_ms = sio.loadmat(file_dir + file_name + 'ms.mat')["ms"]
-
-Xsens_position = sio.loadmat(file_dir + file_name + 'position.mat')["position"]
-# Xsens_orientation = sio.loadmat(file_dir + file_name + 'orientation.mat')["orientation"]
-Xsens_velocity = sio.loadmat(file_dir + file_name + 'velocity.mat')["velocity"]
-# Xsens_acceleration = sio.loadmat(file_dir + file_name + 'acceleration.mat')["acceleration"]
-# Xsens_angularVelocity = sio.loadmat(file_dir + file_name + 'angularVelocity.mat')["angularVelocity"]
-# Xsens_angularAcceleration = sio.loadmat(file_dir + file_n_frontame + 'angularAcceleration.mat')["angularAcceleration"]
-Xsens_sensorFreeAcceleration = sio.loadmat(file_dir + file_name + 'sensorFreeAcceleration.mat')["sensorFreeAcceleration"]
-# Xsens_sensorOrientation = sio.loadmat(file_dir + file_name + 'sensorOrientation.mat')["sensorOrientation"]
-Xsens_jointAngle = sio.loadmat(file_dir + file_name + 'jointAngle.mat')["jointAngle"]
-Xsens_centerOfMass = sio.loadmat(file_dir + file_name + 'centerOfMass.mat')["centerOfMass"]
-
-num_joints = int(round(np.shape(Xsens_position)[1])/3)
-
-############################### Load Pupil data ##############################################
-
-file = open(gaze_position_labels, "rb")
-points_labels, active_points, curent_AOI_label, csv_eye_tracking = pickle.load(file)
-
-filename_gaze = eye_tracking_data_path + 'gaze.csv'
-filename_imu = eye_tracking_data_path + 'imu.csv'
-filename_timestamps = eye_tracking_data_path + 'world_timestamps.csv'
-
-csv_gaze_read = np.char.split(pd.read_csv(filename_gaze, sep='\t').values.astype('str'), sep=',')
-csv_imu_read = np.char.split(pd.read_csv(filename_imu, sep='\t').values.astype('str'), sep=',')
-timestamp_image = np.char.split(pd.read_csv(filename_timestamps, sep='\t').values.astype('str'), sep=',')
-
-csv_eye_tracking = np.zeros((len(csv_gaze_read), 7))
-for i in range(len(csv_gaze_read)):
-    csv_eye_tracking[i, 0] = float(csv_gaze_read[i][0][2])  # timestemp
-    csv_eye_tracking[i, 1] = int(round(float(csv_gaze_read[i][0][3])))  # pos_x
-    csv_eye_tracking[i, 2] = int(round(float(csv_gaze_read[i][0][4])))  # pos_y
-    csv_eye_tracking[i, 3] = float(csv_gaze_read[i][0][5])  # confidence
-
-time_stamps_eye_tracking = np.zeros((len(timestamp_image),))
-time_stamps_eye_tracking_index_on_pupil = np.zeros((len(timestamp_image),))
-for i in range(len(timestamp_image)):
-    time_stamps_eye_tracking_index_on_pupil[i] = np.argmin(np.abs(csv_eye_tracking[:, 0] - float(timestamp_image[i][0][2])))
-
-plt.figure()
-plt.plot(np.abs(csv_eye_tracking[:, 0] - time_stamps_eye_tracking[600]))
-plt.title("csv_eye_tracking[:, 0] - time_stamps_eye_tracking[600]")
-plt.show()
-
-zeros_clusters_index = curent_AOI_label["Not an acrobatics"][:-1] - curent_AOI_label["Not an acrobatics"][1:]
-zeros_clusters_index = np.hstack((0, zeros_clusters_index))
-end_of_move_index_image = np.where(zeros_clusters_index == -1)[0].tolist()
-start_of_move_index_image = np.where(zeros_clusters_index == 1)[0].tolist()
-
-end_of_move_index = time_stamps_eye_tracking_index_on_pupil[end_of_move_index_image]
-start_of_move_index = time_stamps_eye_tracking_index_on_pupil[start_of_move_index_image]
-
-plt.figure()
-plt.plot(time_stamps_eye_tracking_index_on_pupil)
-plt.plot(end_of_move_index_image, time_stamps_eye_tracking_index_on_pupil[end_of_move_index_image], 'xr')
-plt.plot(start_of_move_index_image, time_stamps_eye_tracking_index_on_pupil[start_of_move_index_image], 'xg')
-plt.title("timestaps + start(xr) and end(xg) of move")
-plt.show()
-
-# movie_path = "/home/user/Documents/Eye-tracking/PupilData/undistorted_videos/"
-# movie_file = movie_path + movie_name + "_undistorted_images.pkl"
-# file = open(movie_file, "rb")
-# frames = pickle.load(file)
-# num_frames = len(frames)
-#
-# plt.figure()
-# plt.imshow(frames[int(start_of_move_index_image[0])])
-# plt.title("Take-off frame")
-# plt.show()
-#
-# plt.figure()
-# plt.imshow(frames[int(end_of_move_index_image[0])])
-# plt.title("Landing frame")
-# plt.show()
-
-# 2 -> 0: gaze_timestamp
-# 3 -> 1: norm_pos_x
-# 4 -> 2: norm_pos_y
-# 5 -> 3: confidence
-# 4: closest image time_stamp
-# 5: pos_x_bedFrame -> computed from labeling and distortion
-# 6: pos_y_bedFrame -> computed from labeling and distortion
-
-csv_imu = np.zeros((len(csv_imu_read), 7))
-for i in range(len(csv_imu_read)):
-    if float(csv_imu_read[i][0][2]) == 0:
-        break
-    csv_imu[i, 0] = float(csv_imu_read[i][0][2])  # timestemp
-    csv_imu[i, 1] = float(csv_imu_read[i][0][3])  # gyro_x [deg/s]
-    csv_imu[i, 2] = float(csv_imu_read[i][0][4])  # gyro_y [deg/s]
-    csv_imu[i, 3] = float(csv_imu_read[i][0][5])  # gyro_z [deg/s]
-    csv_imu[i, 4] = float(csv_imu_read[i][0][6]) * 9.81  # acceleration_x [était en G, maintenant en m/s**2]
-    csv_imu[i, 5] = float(csv_imu_read[i][0][7]) * 9.81  # acceleration_y [était en G, maintenant en m/s**2]
-    csv_imu[i, 6] = float(csv_imu_read[i][0][8]) * 9.81  # acceleration_z [était en G, maintenant en m/s**2]
-    # csv_imu[i, 4] = np.argmin(np.abs(csv_eye_tracking[i, 0] - time_stamps_eye_tracking)) # closest image timestemp
-
-csv_imu = csv_imu[np.nonzero(csv_imu[:, 0])[0], :]
-
-# 2 -> 0: imu_timestamp
-# 3 -> 1: gyro_x
-# 4 -> 2: gyro_y
-# 5 -> 3: gyro_z
-# 6 -> 4: acceleration_x
-# 7 -> 5: acceleration_y
-# 8 -> 6: acceleration_z
-
-
-###################################################################################################################
-
 links = np.array([[0, 1],
                   [1, 2],
                   [2, 3],
@@ -243,30 +136,169 @@ links = np.array([[0, 1],
                   [20, 21],
                   [21, 22]])
 
-def animate(Xsens_position, CoM_trajectory, links, output_file_name):
 
+Xsens_Subject_name = sio.loadmat(file_dir + file_name + 'Subject_name.mat')["Subject_name"]
+Xsens_Move_name = sio.loadmat(file_dir + file_name + 'Move_name.mat')["Move_name"]
+Xsens_Subject_name = sio.loadmat(file_dir + file_name + 'Subject_name.mat')["Subject_name"]
+Xsens_frameRate = sio.loadmat(file_dir + file_name + 'frameRate.mat')["frameRate"]
+Xsens_time = sio.loadmat(file_dir + file_name + 'time.mat')["time"]
+Xsens_index = sio.loadmat(file_dir + file_name + 'index.mat')["index"]
+Xsens_ms = sio.loadmat(file_dir + file_name + 'ms.mat')["ms"]
 
-    # Plot CoM
+Xsens_position = sio.loadmat(file_dir + file_name + 'position.mat')["position"]
+Xsens_orientation = sio.loadmat(file_dir + file_name + 'orientation.mat')["orientation"]
+Xsens_velocity = sio.loadmat(file_dir + file_name + 'velocity.mat')["velocity"]
+# Xsens_acceleration = sio.loadmat(file_dir + file_name + 'acceleration.mat')["acceleration"]
+# Xsens_angularVelocity = sio.loadmat(file_dir + file_name + 'angularVelocity.mat')["angularVelocity"]
+# Xsens_angularAcceleration = sio.loadmat(file_dir + file_n_frontame + 'angularAcceleration.mat')["angularAcceleration"]
+Xsens_sensorFreeAcceleration = sio.loadmat(file_dir + file_name + 'sensorFreeAcceleration.mat')["sensorFreeAcceleration"]
+# Xsens_sensorOrientation = sio.loadmat(file_dir + file_name + 'sensorOrientation.mat')["sensorOrientation"]
+Xsens_jointAngle = sio.loadmat(file_dir + file_name + 'jointAngle.mat')["jointAngle"]
+Xsens_centerOfMass = sio.loadmat(file_dir + file_name + 'centerOfMass.mat')["centerOfMass"]
+Xsens_global_JCS_positions = sio.loadmat(file_dir + file_name + 'global_JCS_positions.mat')["global_JCS_positions"]
+
+num_joints = int(round(np.shape(Xsens_position)[1])/3)
+#
+# ############################### Load Pupil data ##############################################
+#
+# file = open(gaze_position_labels, "rb")
+# points_labels, active_points, curent_AOI_label, csv_eye_tracking = pickle.load(file)
+#
+# filename_gaze = eye_tracking_data_path + 'gaze.csv'
+# filename_imu = eye_tracking_data_path + 'imu.csv'
+# filename_timestamps = eye_tracking_data_path + 'world_timestamps.csv'
+#
+# csv_gaze_read = np.char.split(pd.read_csv(filename_gaze, sep='\t').values.astype('str'), sep=',')
+# csv_imu_read = np.char.split(pd.read_csv(filename_imu, sep='\t').values.astype('str'), sep=',')
+# timestamp_image = np.char.split(pd.read_csv(filename_timestamps, sep='\t').values.astype('str'), sep=',')
+#
+# csv_eye_tracking = np.zeros((len(csv_gaze_read), 7))
+# for i in range(len(csv_gaze_read)):
+#     csv_eye_tracking[i, 0] = float(csv_gaze_read[i][0][2])  # timestemp
+#     csv_eye_tracking[i, 1] = int(round(float(csv_gaze_read[i][0][3])))  # pos_x
+#     csv_eye_tracking[i, 2] = int(round(float(csv_gaze_read[i][0][4])))  # pos_y
+#     csv_eye_tracking[i, 3] = float(csv_gaze_read[i][0][5])  # confidence
+#
+# time_stamps_eye_tracking = np.zeros((len(timestamp_image),))
+# time_stamps_eye_tracking_index_on_pupil = np.zeros((len(timestamp_image),))
+# for i in range(len(timestamp_image)):
+#     time_stamps_eye_tracking_index_on_pupil[i] = np.argmin(np.abs(csv_eye_tracking[:, 0] - float(timestamp_image[i][0][2])))
+#
+# plt.figure()
+# plt.plot(np.abs(csv_eye_tracking[:, 0] - time_stamps_eye_tracking[600]))
+# plt.title("csv_eye_tracking[:, 0] - time_stamps_eye_tracking[600]")
+# plt.show()
+#
+# zeros_clusters_index = curent_AOI_label["Not an acrobatics"][:-1] - curent_AOI_label["Not an acrobatics"][1:]
+# zeros_clusters_index = np.hstack((0, zeros_clusters_index))
+# end_of_move_index_image = np.where(zeros_clusters_index == -1)[0].tolist()
+# start_of_move_index_image = np.where(zeros_clusters_index == 1)[0].tolist()
+#
+# end_of_move_index = time_stamps_eye_tracking_index_on_pupil[end_of_move_index_image]
+# start_of_move_index = time_stamps_eye_tracking_index_on_pupil[start_of_move_index_image]
+#
+# plt.figure()
+# plt.plot(time_stamps_eye_tracking_index_on_pupil)
+# plt.plot(end_of_move_index_image, time_stamps_eye_tracking_index_on_pupil[end_of_move_index_image], 'xr')
+# plt.plot(start_of_move_index_image, time_stamps_eye_tracking_index_on_pupil[start_of_move_index_image], 'xg')
+# plt.title("timestaps + start(xr) and end(xg) of move")
+# plt.show()
+#
+# # movie_path = home_path + "/Documents/Eye-tracking/PupilData/undistorted_videos/"
+# # movie_file = movie_path + movie_name + "_undistorted_images.pkl"
+# # file = open(movie_file, "rb")
+# # frames = pickle.load(file)
+# # num_frames = len(frames)
+# #
+# # plt.figure()
+# # plt.imshow(frames[int(start_of_move_index_image[0])])
+# # plt.title("Take-off frame")
+# # plt.show()
+# #
+# # plt.figure()
+# # plt.imshow(frames[int(end_of_move_index_image[0])])
+# # plt.title("Landing frame")
+# # plt.show()
+#
+# # 2 -> 0: gaze_timestamp
+# # 3 -> 1: norm_pos_x
+# # 4 -> 2: norm_pos_y
+# # 5 -> 3: confidence
+# # 4: closest image time_stamp
+# # 5: pos_x_bedFrame -> computed from labeling and distortion
+# # 6: pos_y_bedFrame -> computed from labeling and distortion
+#
+# csv_imu = np.zeros((len(csv_imu_read), 7))
+# for i in range(len(csv_imu_read)):
+#     if float(csv_imu_read[i][0][2]) == 0:
+#         break
+#     csv_imu[i, 0] = float(csv_imu_read[i][0][2])  # timestemp
+#     csv_imu[i, 1] = float(csv_imu_read[i][0][3])  # gyro_x [deg/s]
+#     csv_imu[i, 2] = float(csv_imu_read[i][0][4])  # gyro_y [deg/s]
+#     csv_imu[i, 3] = float(csv_imu_read[i][0][5])  # gyro_z [deg/s]
+#     csv_imu[i, 4] = float(csv_imu_read[i][0][6]) * 9.81  # acceleration_x [était en G, maintenant en m/s**2]
+#     csv_imu[i, 5] = float(csv_imu_read[i][0][7]) * 9.81  # acceleration_y [était en G, maintenant en m/s**2]
+#     csv_imu[i, 6] = float(csv_imu_read[i][0][8]) * 9.81  # acceleration_z [était en G, maintenant en m/s**2]
+#     # csv_imu[i, 4] = np.argmin(np.abs(csv_eye_tracking[i, 0] - time_stamps_eye_tracking)) # closest image timestemp
+#
+# csv_imu = csv_imu[np.nonzero(csv_imu[:, 0])[0], :]
+#
+# # 2 -> 0: imu_timestamp
+# # 3 -> 1: gyro_x
+# # 4 -> 2: gyro_y
+# # 5 -> 3: gyro_z
+# # 6 -> 4: acceleration_x
+# # 7 -> 5: acceleration_y
+# # 8 -> 6: acceleration_z
+
+################################################# Animate JCS ##########################################################
+
+def animate(Xsens_position, CoM_trajectory, links, output_file_name, max_frame=0):
+
     # Plot eyes
     # Plot walls
 
+    def Xsens_quat_to_orientation(Xsens_orientation_i, Xsens_position_i, i_line):
+        Xsens_position_calculated = [np.zeros((6, )) for _ in range(num_joints)]
+        Quat_normalized = Xsens_orientation_i[4*i_line:4*(i_line+1)] / np.linalg.norm(Xsens_orientation_i[4*i_line:4*(i_line+1)])
+        Quat = biorbd.Quaternion(Quat_normalized[0], Quat_normalized[1], Quat_normalized[2], Quat_normalized[3])
+        RotMat = biorbd.Quaternion.toMatrix(Quat).to_array()
+        Xsens_position_calculated[i_line][:3] = Xsens_position_i[3*i_line:3*(i_line+1)]
+        Xsens_position_calculated[i_line][3:] = RotMat @ np.array([0, 0, 0.1]) + Xsens_position_i[3*i_line:3*(i_line+1)]
+        if i_line == 6:
+            eye_position = RotMat @ np.array([eye_position_depth, 0, eye_position_height]) + Xsens_position_i[3 * i_line:3 * (i_line + 1)]
+        else:
+            eye_position = np.array([0, 0, 0])
+        return Xsens_position_calculated, eye_position
 
 
-    def update(i, Xsens_position, CoM_trajectory, lines, points, links):
+    def update(i, Xsens_position, CoM_trajectory, lines, CoM_point, line_orientation, eyes_point, links):
 
-        points[0][0].set_data(np.array([CoM_trajectory[i, 0]]), np.array([CoM_trajectory[i, 1]]))
-        points[0][0].set_3d_properties(np.array([CoM_trajectory[i, 2]]))
+        CoM_point[0][0].set_data(np.array([CoM_trajectory[i, 0]]), np.array([CoM_trajectory[i, 1]]))
+        CoM_point[0][0].set_3d_properties(np.array([CoM_trajectory[i, 2]]))
 
         for i_line, line in enumerate(lines):
             line[0].set_data(np.array([Xsens_position[i][3 * links[i_line, 0]], Xsens_position[i][3 * links[i_line, 1]] ]), np.array([Xsens_position[i][3 * links[i_line, 0] + 1], Xsens_position[i][3 * links[i_line, 1] + 1] ]))
             line[0].set_3d_properties(np.array([Xsens_position[i][3 * links[i_line, 0] + 2], Xsens_position[i][3 * links[i_line, 1] + 2] ]))
+
+        for i_line, line in enumerate(line_orientation[:7]): # enumerate(line_orientation):
+            Xsens_position_calculated, eye_position = Xsens_quat_to_orientation(Xsens_orientation[i, :], Xsens_position[i, :], i_line)
+            line[0].set_data(np.array([Xsens_position_calculated[i_line][0], Xsens_position_calculated[i_line][3]]), np.array([Xsens_position_calculated[i_line][1], Xsens_position_calculated[i_line][4]]))
+            line[0].set_3d_properties(np.array([Xsens_position_calculated[i_line][2], Xsens_position_calculated[i_line][5]]))
+            if i_line == 6:
+                eyes_point[0][0].set_data(np.array([eye_position[0]]), np.array([eye_position[1]]))
+                eyes_point[0][0].set_3d_properties(np.array([eye_position[2]]))
+
         return lines
 
     fig = plt.figure()
     ax = p3.Axes3D(fig)
+    ax.set_box_aspect([1, 1, 1])
 
-    points = [ax.plot(0, 0, 0, '.r')]
+    CoM_point = [ax.plot(0, 0, 0, '.r')]
+    eyes_point = [ax.plot(0, 0, 0, '.c')]
     lines = [ax.plot(np.array([0, 0]), np.array([0, 0]), np.array([0, 0]), '-k') for _ in range(len(links))]
+    line_orientation = [ax.plot(np.array([0, 0]), np.array([0, 0]), np.array([0, 0]), '-m') for _ in range(num_joints)]
 
     # Setting the axes properties
     ax.set_xlim3d([-1.0, 1.0])
@@ -281,13 +313,22 @@ def animate(Xsens_position, CoM_trajectory, links, output_file_name):
     ax.set_title('3D Test')
 
     # Creating the Animation object
-    anim = animation.FuncAnimation(fig, update, frames=range(len(Xsens_position)), fargs=(Xsens_position, CoM_trajectory, lines, points, links), blit=False)
+    if max_frame == 0:
+        frame_range = range(len(Xsens_position))
+    else:
+        frame_range = range(max_frame)
+
+    anim = animation.FuncAnimation(fig, update, frames=frame_range, fargs=(Xsens_position, CoM_trajectory, lines, CoM_point, line_orientation, eyes_point, links), blit=False)
 
     anim.save(output_file_name, fps=60, extra_args=['-vcodec', 'libx264'])
     plt.show()
 
     return
 
+output_file_name = home_path + f'/Documents/Programmation/rectangle-labelling/output/Results/{Xsens_Subject_name[0]}/{movie_name}_animation_no_level.mp4'
+animate(Xsens_position, Xsens_centerOfMass, links, output_file_name, 50)
+
+###############################
 
 FLAG_SYNCHRO_PLOTS =  True #False #
 FLAG_COM_PLOTS = False # True #
@@ -593,7 +634,7 @@ if FLAG_COM_PLOTS:
     plt.legend()
     plt.show()
 
-output_file_name = f'/home/user/Documents/Programmation/rectangle-labelling/output/Results/{Xsens_Subject_name[0]}/{movie_name}_animation_no_level.mp4'
+output_file_name = home_path + f'/Documents/Programmation/rectangle-labelling/output/Results/{Xsens_Subject_name[0]}/{movie_name}_animation_no_level.mp4'
 animate(Xsens_position_on_pupil_no_level, Xsens_CoM_on_pupil_no_level, links, output_file_name)
 for i_move in range(len(move_names)):
     start_index = start_of_move_index_updated[i_move]
@@ -619,7 +660,7 @@ for i_move in range(len(move_names)):
         for j in range(num_joints):
             Xsens_position_on_pupil_no_level_CoM_corrected[i, 3*j:3*(j+1)] = Xsens_position_on_pupil_no_level[start_index+i,3*j:3*(j+1)] + hip_trajectory_imove[i, :]
 
-    output_file_name = f'/home/user/Documents/Programmation/rectangle-labelling/output/Results/{Xsens_Subject_name[0]}/{move_names[i_move]}/{movie_name}_animation_{i_move}.mp4'
+    output_file_name = home_path + f'/Documents/Programmation/rectangle-labelling/output/Results/{Xsens_Subject_name[0]}/{move_names[i_move]}/{movie_name}_animation_{i_move}.mp4'
     animate(Xsens_position_on_pupil_no_level_CoM_corrected, CoM_trajectory_imove, links, output_file_name)
     embed()
 

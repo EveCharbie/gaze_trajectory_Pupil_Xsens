@@ -5,9 +5,9 @@
 clear all; close all; clc;
 
 % file_dir = '/home/user/Documents/Eye-tracking/XsensData';
-file_dir = '/home/user/Documents/Programmation/gaze_trajectory_Pupil_Xsens/XsensData';
-% file_dir = '/home/fbailly/Documents/Programmation/gaze_trajectory_Pupil_Xsens/XsensData';
-file_name = 'Test_17032021-020.mvnx';
+% file_dir = '/home/user/Documents/Programmation/gaze_trajectory_Pupil_Xsens/XsensData';
+file_dir = '/home/fbailly/Documents/Programmation/gaze_trajectory_Pupil_Xsens/XsensData';
+file_name = 'Test_17032021-007.mvnx';
 
 % mvnx = load_mvnx([file_dir, '/exports/' file_name])
 mvnx = load_mvnx([file_dir, '/' file_name])
