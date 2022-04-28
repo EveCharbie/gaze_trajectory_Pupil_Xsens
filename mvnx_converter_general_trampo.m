@@ -2,11 +2,11 @@ function [data] = mvnx_converter_general_trampo(mvnx, file_dir, file_name, Subje
 
     %trim unwanted information
     temp = mvnx.subject.frames.frame;
+    global_JCS_positions = mvnx.subject.frames.frame(3).position;
     temp = temp(4:end); %get rid of unwanted fields
     frameRate = mvnx.subject.frameRate;
     % fields = { 'tc' , 'ms', 'type', 'index', 'footContacts', 'jointAngleXZY', 'jointAngleErgoXZY', 'jointAngleErgo', 'centerOfMass'}; %fields you would like to remove
     % temp = rmfield(temp, fields); 
-    global_JCS_positions = mvnx.subject.frames.frame(3).position;
 
     for j=1:length(mvnx.subject.segments.segment)
         segmentQLabels{1 + 4*(j-1)} = {[mvnx.subject.segments.segment(j).label, '_w']} ; %23 segmentsx4 =92
