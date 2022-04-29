@@ -10,7 +10,7 @@ import pandas as pd
 import mpl_toolkits.mplot3d.axes3d as p3
 import matplotlib.animation as animation
 from os.path import exists
-from unproject_PI_2d_pixel_gaze_estimates import pixelPoints_to_gazeAngles
+from casadi import *
 
 def sync_jump(Xsens_sensorFreeAcceleration, start_of_jump_index, end_of_jump_index, FLAG_SYNCHRO_PLOTS, csv_imu, Xsens_ms):
 
@@ -28,25 +28,56 @@ def sync_jump(Xsens_sensorFreeAcceleration, start_of_jump_index, end_of_jump_ind
             else:
                 Xsens_sensorFreeAcceleration_averaged[i, j] = np.mean(Xsens_sensorFreeAcceleration[i - moving_average_window_size : i + moving_average_window_size + 1, j + 6])
 
+    # moving_average_window_size_smoothest = 30
+    # Xsens_sensorFreeAcceleration_averaged_smoothest = np.zeros((len(Xsens_sensorFreeAcceleration), 3))
+    # for j in range(3):
+    #     for i in range(len(Xsens_sensorFreeAcceleration)):
+    #         if i < moving_average_window_size:
+    #             Xsens_sensorFreeAcceleration_averaged_smoothest[i, j] = np.mean(Xsens_sensorFreeAcceleration[:2 * i + 1, j + 6])
+    #         elif i > (len(Xsens_sensorFreeAcceleration) - moving_average_window_size - 1):
+    #             Xsens_sensorFreeAcceleration_averaged_smoothest[i, j] = np.mean(Xsens_sensorFreeAcceleration[-2 * (len(Xsens_sensorFreeAcceleration) - i) + 1:, j + 6])
+    #         else:
+    #             Xsens_sensorFreeAcceleration_averaged_smoothest[i, j] = np.mean(Xsens_sensorFreeAcceleration[i - moving_average_window_size : i + moving_average_window_size + 1, j + 6])
+
     if FLAG_SYNCHRO_PLOTS:
         plt.figure()
-        plt.plot(Xsens_sensorFreeAcceleration_averaged, '-', label="averaged")
+        plt.plot(Xsens_sensorFreeAcceleration_averaged, '-', label=f"averaged {moving_average_window_size}")
+        # plt.plot(Xsens_sensorFreeAcceleration_averaged_smoothest, '-', linewidth=3, label=f"averaged {moving_average_window_size_smoothest}")
         plt.plot(Xsens_sensorFreeAcceleration[:, 6:9], ':', label="raw")
         plt.legend()
         plt.title('Xsens')
         plt.show()
 
     Xsens_sensorFreeAcceleration_averaged_norm = np.linalg.norm(Xsens_sensorFreeAcceleration_averaged, axis=1)
+    # Xsens_sensorFreeAcceleration_averaged_norm_smoothest = np.linalg.norm(Xsens_sensorFreeAcceleration_averaged_smoothest, axis=1)
+
+    diff_time = 10000
+    time_offset = 0
+    len_diff = len(candidate_start) - len(start_of_jump_index)
+    for i in range(len_diff):  # considere qu'il y a toujours plus de candidats que de vrai sauts
+        candidate_start_this_time = candidate_start[i: -(len_diff - i)]
+
+        time_diff = SX.sym("time_diff", 1)
+        f = sum1(((time_vector_pupil[start_of_jump_index.astype(int)] - time_diff) - np.reshape(
+            time_vector_xsens[candidate_start_this_time], len(candidate_start_this_time))) ** 2)
+        nlp = {'x': time_diff, 'f': f}
+        MySolver = "ipopt"
+        solver = nlpsol("solver", MySolver, nlp)
+        sol = solver()
+
+        if sol["f"] < diff_time:
+            diff_time = np.array([sol["f"]])[0][0][0]
+            time_offset = np.array([sol["x"]])[0][0][0]
 
     if FLAG_SYNCHRO_PLOTS:
-        embed()
 
         peaks_max, _ = signal.find_peaks(Xsens_sensorFreeAcceleration_averaged_norm, prominence=(10, None))
         peaks_min, _ = signal.find_peaks(-Xsens_sensorFreeAcceleration_averaged_norm, prominence=(2, None))
         # peaks_total = np.sort(np.hstack((peaks_min, peaks_max)))
 
         plt.figure()
-        plt.plot(time_vector_xsens, Xsens_sensorFreeAcceleration_averaged_norm, '-k', alpha=0.5, label="averaged")
+        plt.plot(time_vector_xsens, Xsens_sensorFreeAcceleration_averaged_norm, '-k', alpha=0.5, label=f"averaged {moving_average_window_size}")
+        # plt.plot(time_vector_xsens, Xsens_sensorFreeAcceleration_averaged_norm_smoothest, '-k', linewidth=5, alpha=0.5, label=f"averaged {moving_average_window_size_smoothest}")
         plt.plot(time_vector_xsens[peaks_max], Xsens_sensorFreeAcceleration_averaged_norm[peaks_max], 'xr')
         plt.plot(time_vector_xsens[peaks_min], Xsens_sensorFreeAcceleration_averaged_norm[peaks_min], 'xm')
 
@@ -55,102 +86,36 @@ def sync_jump(Xsens_sensorFreeAcceleration, start_of_jump_index, end_of_jump_ind
         for i in range(len(peaks_min) - 1):
             xsens_std = np.std(Xsens_sensorFreeAcceleration_averaged_norm[peaks_min[i] + 5: peaks_min[i+1] - 5])
             if xsens_std < 1 and np.abs(time_vector_xsens[peaks_min[i]] - time_vector_xsens[peaks_min[i+1]]) > 0.5:
-                plt.plot(time_vector_xsens[peaks_min[i] : peaks_min[i+1]],
-                         Xsens_sensorFreeAcceleration_averaged_norm[peaks_min[i] : peaks_min[i+1]],
-                         '-k', label="potential jump")
+                if i == 0:
+                    plt.plot(time_vector_xsens[peaks_min[i] : peaks_min[i+1]],
+                             Xsens_sensorFreeAcceleration_averaged_norm[peaks_min[i] : peaks_min[i+1]],
+                             '-k', label="potential jump")
+                else:
+                    plt.plot(time_vector_xsens[peaks_min[i] : peaks_min[i+1]],
+                             Xsens_sensorFreeAcceleration_averaged_norm[peaks_min[i] : peaks_min[i+1]],
+                             '-k')
                 candidate_start += [peaks_min[i]]
                 candidate_end += [peaks_min[i+1]]
 
         for i in range(len(start_of_jump_index)):
             if i == 0:
-                plt.plot(np.ones((2, )) * time_vector_pupil[int(start_of_jump_index[i])],
+                plt.plot(np.ones((2, )) * time_vector_pupil[int(start_of_jump_index[i])] - time_offset,
                          np.array([np.min(Xsens_sensorFreeAcceleration_averaged_norm),
-                                   np.max(Xsens_sensorFreeAcceleration_averaged_norm)]), '-k', label='Start of jump')
-                plt.plot(np.ones((2,)) * time_vector_pupil[int(end_of_jump_index[i])],
+                                   np.max(Xsens_sensorFreeAcceleration_averaged_norm)]), '-c', label='Start of jump')
+                plt.plot(np.ones((2,)) * time_vector_pupil[int(end_of_jump_index[i])] - time_offset,
                          np.array([np.min(Xsens_sensorFreeAcceleration_averaged_norm),
-                                   np.max(Xsens_sensorFreeAcceleration_averaged_norm)]), '-k', label='End of jump')
+                                   np.max(Xsens_sensorFreeAcceleration_averaged_norm)]), '-c', label='End of jump')
             else:
-                plt.plot(np.ones((2,)) * time_vector_pupil[int(start_of_jump_index[i])],
+                plt.plot(np.ones((2,)) * time_vector_pupil[int(start_of_jump_index[i])] - time_offset,
                          np.array([np.min(Xsens_sensorFreeAcceleration_averaged_norm),
-                                   np.max(Xsens_sensorFreeAcceleration_averaged_norm)]), '-k')
-                plt.plot(np.ones((2,)) * time_vector_pupil[int(end_of_jump_index[i])],
+                                   np.max(Xsens_sensorFreeAcceleration_averaged_norm)]), '-c')
+                plt.plot(np.ones((2,)) * time_vector_pupil[int(end_of_jump_index[i])] - time_offset,
                          np.array([np.min(Xsens_sensorFreeAcceleration_averaged_norm),
-                                   np.max(Xsens_sensorFreeAcceleration_averaged_norm)]), '-k')
+                                   np.max(Xsens_sensorFreeAcceleration_averaged_norm)]), '-c')
 
         plt.legend()
         plt.title('Xsens')
         plt.show()
-
-
-    if len(candidate_start) == len(start_of_jump_index):
-        time_diff = time_vector_pupil[int(start_of_jump_index[0])] - time_vector_xsens[candidate_start[0]]
-    else:
-        total_diff = 1000
-        for i in range(len(candidate_start) - len(start_of_jump_index)):
-            start_of_jump_index_chosen = start_of_jump_index[i : i + len(candidate_start)]
-            time_diff = time_vector_pupil[int(start_of_jump_index[i])] - time_vector_xsens[candidate_start[0]]
-            for j in range(len(candidate_start)):
-            time_sync_error = np.sum(time_vector_pupil[int(start_of_jump_index[0])] - time_vector_xsens[candidate_start[0]])
-
-
-    if FLAG_COM_PLOTS:
-        # labels_CoM = ["X", "Y", "Z", "vitesse X", "vitesse Y", "vitesse Z", "acc X", "acc Y", "acc Z"]
-        # plt.figure()
-        # for i in range(3):
-        #     plt.plot(Xsens_centerOfMass[:, i], label=f'{labels_CoM[i]}')
-        # plt.legend()
-        # plt.show()
-        #
-        # peaks_max, _ = signal.find_peaks(Xsens_centerOfMass[:, 5], prominence=(0.1, None))
-        # peaks_min, _ = signal.find_peaks(-Xsens_centerOfMass[:, 5], prominence=(0.1, None))
-        #
-        # peaks_total = np.sort(np.hstack((peaks_min, peaks_max)))
-        #
-        # plt.figure()
-        # for i in range(3, 6):
-        #     plt.plot(time_vector_xsens, Xsens_centerOfMass[:, i], label=f'{labels_CoM[i]}')
-        #     if i == 5:
-        #         plt.plot(time_vector_xsens[peaks_max], Xsens_centerOfMass[peaks_max, 5], 'xg')
-        #         plt.plot(time_vector_xsens[peaks_min], Xsens_centerOfMass[peaks_min, 5], 'xg')
-        #         for j in range(len(peaks_total) - 1):
-        #             x_linregress = np.reshape(time_vector_xsens[peaks_total[j]:peaks_total[j + 1]],
-        #                                       (len(time_vector_xsens[peaks_total[j]:peaks_total[j + 1]]),))
-        #             slope, intercept, _, _, _ = scipy.stats.linregress(x_linregress,
-        #                                                                Xsens_centerOfMass[
-        #                                                                peaks_total[j]: peaks_total[j + 1], 5])
-        #             plt.plot(x_linregress,
-        #                      intercept + slope * x_linregress,
-        #                      '--k', alpha=0.5)
-        #             print("slope : ", slope)
-        #
-        # plt.legend()
-        # plt.show()
-
-        plt.figure()
-        plt.plot(time_vector_xsens, Xsens_centerOfMass[:, 5], label='acceleration CoM Z')
-        plt.plot(time_vector_xsens[peaks_max], Xsens_centerOfMass[peaks_max, 5], 'xg')
-        plt.plot(time_vector_xsens[peaks_min], Xsens_centerOfMass[peaks_min, 5], 'xg')
-        for j in range(len(peaks_total) - 1):
-            x_linregress = np.reshape(time_vector_xsens[peaks_total[j]:peaks_total[j + 1]],
-                                      (len(time_vector_xsens[peaks_total[j]:peaks_total[j + 1]]),))
-            slope, intercept, _, _, _ = scipy.stats.linregress(x_linregress,
-                                                               Xsens_centerOfMass[peaks_total[j]: peaks_total[j + 1],
-                                                               5])
-            plt.plot(x_linregress,
-                     intercept + slope * x_linregress,
-                     '--k', alpha=0.5)
-        plt.plot(time_vector_xsens, Xsens_sensorFreeAcceleration_averaged_norm, '-r',
-                 label="norm acceleration tete IMU")
-
-        plt.legend()
-        plt.show()
-
-        plt.figure()
-        for i in range(6, 9):
-            plt.plot(Xsens_centerOfMass[:, i], label=f'{labels_CoM[i]}')
-        plt.legend()
-        plt.show()
-
 
 
 

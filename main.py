@@ -23,7 +23,8 @@ if exists("/home/user"):
     file_dir = '/home/user/Documents/Eye-tracking/XsensData/'
 elif exists("/home/fbailly"):
     home_path = "/home/fbailly"
-    file_dir = "/home/fbailly/Documents/Programmation/gaze_trajectory_Pupil_Xsens/XsensData/"
+    # file_dir = "/home/fbailly/Documents/Programmation/gaze_trajectory_Pupil_Xsens/XsensData/"
+    file_dir = '/home/fbailly/Documents/Eye-tracking/XsensData/'
 
 csv_name = home_path + "/Documents/Programmation/rectangle-labelling/Trials_name_mapping.csv"
 csv_table = np.char.split(pd.read_csv(csv_name, sep='\t').values.astype('str'), sep=',')
