@@ -4,9 +4,6 @@ import matplotlib.pyplot as plt
 import pickle
 import sympy
 
-def get_vector_from_Xsens():
-
-    return vector_origin, vector_orientation
 
 def get_gaze_position_from_intersection(vector_origin, vector_orientation, planes_points, planes_normal_vectors):
     def intersection_plane_vector(vector_origin, vector_orientation, planes_points, planes_normal_vectors, epsilon=1e-6):
@@ -88,7 +85,7 @@ def unwrap_gaze_position(gaze_position):
     return gaze_position_x_y
 
 ################### Attention le plafond est 'la heuteur de la toile' trop haut
-# ceiling height = 9.462
+# ceiling height = 9.462 -
 # zero is positioned at the center of the trampoline
 planes_points = [[121 * 0.0254 / 2, 7.193, 0], # trampoline
                  [121 * 0.0254 / 2, 7.193, 0], # wall front
@@ -147,8 +144,6 @@ planes_vector = [ [0, 0, 1 ], # trampoline
 
 
 
-
-# gaze_position =
 for j in range(len(xsens_data)):
     vector_origin, vector_orientation = get_vector_from_Xsens() # [0,0,0], [1,1,1]
     # vector_orientation should be unit vector
@@ -159,7 +154,6 @@ for j in range(len(xsens_data)):
     ax = plt.axes(projection='3d')
     for i in range(len(planes_points)):
         ax.plot_surface(planes_plots_info[i][0], planes_plots_info[i][1], planes_plots_info[i][2])
-    # ax.set_aspect('equal') # It is not currently possible to manually set the aspect on 3D axes
     ax.set_xlabel('gauche/droite')
     ax.set_ylabel('derriere/devant')
     ax.set_zlabel('plancher/plafond')
