@@ -14,6 +14,8 @@ from unproject_PI_2d_pixel_gaze_estimates import pixelPoints_to_gazeAngles
 from sync_jump import sync_jump
 from CoM_transfo import CoM_transfo
 from gaze_orientation import gaze_orientation
+from get_data_at_same_timestamps import get_data_at_same_timestamps
+from animate_JCS import animate
 
 ############################### Load general data ##############################################
 file_name = 'Test_17032021-007/'
@@ -172,10 +174,20 @@ points_labels, active_points, curent_AOI_label, csv_eye_tracking = pickle.load(f
 filename_gaze = eye_tracking_data_path + 'gaze.csv'
 filename_imu = eye_tracking_data_path + 'imu.csv'
 filename_timestamps = eye_tracking_data_path + 'world_timestamps.csv'
+filename_info = eye_tracking_data_path + 'info.json'
 
 csv_gaze_read = np.char.split(pd.read_csv(filename_gaze, sep='\t').values.astype('str'), sep=',')
 csv_imu_read = np.char.split(pd.read_csv(filename_imu, sep='\t').values.astype('str'), sep=',')
 timestamp_image = np.char.split(pd.read_csv(filename_timestamps, sep='\t').values.astype('str'), sep=',')
+info = np.char.split(pd.read_csv(filename_info, sep='\t').values.astype('str'), sep=',')
+serial_number_str = info[15][0][0]
+num_quote = 0
+for pos, char in enumerate(serial_number_str):
+    if char == '"':
+        num_quote += 1
+        if num_quote == 3:
+            SCENE_CAMERA_SERIAL_NUMBER = serial_number_str[pos+1:pos+6]
+            break
 
 csv_eye_tracking = np.zeros((len(csv_gaze_read), 7))
 for i in range(len(csv_gaze_read)):
@@ -250,82 +262,39 @@ csv_imu = csv_imu[np.nonzero(csv_imu[:, 0])[0], :]
 ######################################################################################################################
 
 
-# output_file_name = home_path + f'/Documents/Programmation/rectangle-labelling/output/Results/{Xsens_Subject_name[0]}/{movie_name}_animation_no_level.mp4'
-# animate(Xsens_position, Xsens_centerOfMass, elevation, azimuth, links, output_file_name, 50)
+output_file_name = home_path + f'/Documents/Programmation/rectangle-labelling/output/Results/{Xsens_Subject_name[0]}/{movie_name}_animation_no_level.mp4'
+animate(Xsens_orientation, [Xsens_position], [Xsens_centerOfMass], [np.zeros((len(Xsens_position)))], [np.zeros((len(Xsens_position)))], eye_position_height, eye_position_depth, links, num_joints, output_file_name, 250)
 
 FLAG_SYNCHRO_PLOTS =  True #False #
 FLAG_COM_PLOTS = False # True #
 
-sync_jump(Xsens_sensorFreeAcceleration, start_of_jump_index, end_of_jump_index, FLAG_SYNCHRO_PLOTS, csv_imu, Xsens_ms)
-embed()
-CoM_transfo()
+xsens_start_of_jump_index, xsens_end_of_jump_index, xsens_start_of_move_index, xsens_end_of_move_index, time_vector_xsens, time_vector_pupil_offset = sync_jump(Xsens_sensorFreeAcceleration, start_of_jump_index, end_of_jump_index, start_of_move_index, end_of_move_index, FLAG_SYNCHRO_PLOTS, csv_imu, Xsens_ms)
 
+time_vector_pupil_per_move, Xsens_orientation_per_move, Xsens_position_per_move, Xsens_CoM_per_move, elevation_per_move, azimuth_per_move = get_data_at_same_timestamps(
+    Xsens_orientation,
+    Xsens_position,
+    xsens_start_of_move_index,
+    xsens_end_of_move_index,
+    time_vector_xsens,
+    start_of_move_index,
+    end_of_move_index,
+    time_vector_pupil_offset,
+    csv_eye_tracking,
+    Xsens_centerOfMass,
+    SCENE_CAMERA_SERIAL_NUMBER,
+    num_joints)
 
-if len(norm_accelaration_xsens) > len(norm_accelaration_pupil):  # Xsens > Pupil
-    xsens_time_slided = np.reshape(time_vector_xsens - glide_shift_time, len(time_vector_xsens))
-else:
-    xsens_time_slided = np.reshape(time_vector_xsens + glide_shift_time, len(time_vector_xsens))
-
-if xsens_time_slided[0] > time_vector_pupil[0]:
-    arg_min_time = np.argmin(np.abs(xsens_time_slided[0] - time_vector_pupil)) + 5
-    start_of_move_index_updated = start_of_move_index - arg_min_time
-else:
-    arg_min_time = 0 + 5
-if xsens_time_slided[-1] < time_vector_pupil[-1]:
-    arg_max_time = np.argmin(np.abs(xsens_time_slided[-1] - time_vector_pupil)) - 5
-else:
-    arg_max_time = len(time_vector_pupil) - 5
-
-start_of_move_index_updated = np.asarray(start_of_move_index - arg_min_time, np.int64)
-end_of_move_index_updated = np.asarray(end_of_move_index - arg_min_time, np.int64)
-
-time_vector_pupil_chopped = time_vector_pupil[arg_min_time:arg_max_time]
-# chop pupil data avec ces args min max la aussi pour avoir exactement les meme time points avec Xsens ###########
-elevation_pupil_pixel_choped = csv_eye_tracking[arg_min_time:arg_max_time, 1]
-azimuth_pupil_pixel_choped = csv_eye_tracking[arg_min_time:arg_max_time, 2]
-
-Xsens_position_on_pupil = np.zeros((len(time_vector_pupil_chopped), np.shape(Xsens_position)[1]))
-for i in range(np.shape(Xsens_position)[1]):
-    xsens_interp_on_pupil = scipy.interpolate.interp1d(xsens_time_slided, Xsens_position[:, i])
-    Xsens_position_on_pupil[:, i] = xsens_interp_on_pupil(time_vector_pupil_chopped)
-
-Xsens_CoM_on_pupil = np.zeros((len(time_vector_pupil_chopped), 9))
-for i in range(9):
-    xsens_interp_on_pupil = scipy.interpolate.interp1d(xsens_time_slided, Xsens_centerOfMass[:, i])
-    Xsens_CoM_on_pupil[:, i] = xsens_interp_on_pupil(time_vector_pupil_chopped)
-
-xsens_interp_on_pupil = scipy.interpolate.interp1d(xsens_time_slided, Xsens_sensorFreeAcceleration_averaged_norm)
-Xsens_sensorFreeAcceleration_averaged_norm_on_pupil = xsens_interp_on_pupil(time_vector_pupil_chopped)
-
-if FLAG_SYNCHRO_PLOTS:
-    plt.figure()
-    plt.plot(time_vector_pupil_chopped, csv_imu_averaged_norm[arg_min_time : arg_max_time], label='Pupil choped')
-    plt.plot(time_vector_pupil_chopped, Xsens_sensorFreeAcceleration_averaged_norm_on_pupil, label='Xsens interpolated on pupil')
-    for i in range(len(start_of_move_index_updated)):
-        if i == 0:
-            plt.plot(np.ones((2, )) * time_vector_pupil_chopped[start_of_move_index_updated[i]], np.array([0, np.max(csv_imu_averaged_norm[arg_min_time : arg_max_time])]), '--g', label='Start of movement')
-            plt.plot(np.ones((2,)) * time_vector_pupil_chopped[end_of_move_index_updated[i]], np.array([0, np.max(csv_imu_averaged_norm[arg_min_time: arg_max_time])]), '--r', label='End of movement')
-        else:
-            plt.plot(np.ones((2, )) * time_vector_pupil_chopped[start_of_move_index_updated[i]], np.array([0, np.max(csv_imu_averaged_norm[arg_min_time : arg_max_time])]), '--g')
-            plt.plot(np.ones((2,)) * time_vector_pupil_chopped[end_of_move_index_updated[i]], np.array([0, np.max(csv_imu_averaged_norm[arg_min_time: arg_max_time])]), '--r')
-    plt.legend()
-    plt.show()
-
-Xsens_position_on_pupil_no_level = np.zeros(np.shape(Xsens_position_on_pupil))
-Xsens_CoM_on_pupil_no_level = np.zeros((np.shape(Xsens_CoM_on_pupil)[0], 3))
-for i in range(np.shape(Xsens_position_on_pupil)[0]):
-    Pelvis_position = Xsens_position_on_pupil[i, :3]
-    for j in range(num_joints):
-        Xsens_position_on_pupil_no_level[i, 3*j:3*(j+1)] = Xsens_position_on_pupil[i, 3*j:3*(j+1)] - Pelvis_position + np.array([0, 0, hip_height])
-    Xsens_CoM_on_pupil_no_level[i, :] = Xsens_CoM_on_pupil[i, :3]  - Pelvis_position + np.array([0, 0, hip_height])
-
-
-elevation, azimuth = pixelPoints_to_gazeAngles(elevation_pupil_pixel_choped, azimuth_pupil_pixel_choped)
+Xsens_position_no_level_CoM_corrected_per_move, CoM_trajectory_per_move = CoM_transfo(
+    time_vector_pupil_per_move,
+    Xsens_position_per_move,
+    Xsens_CoM_per_move,
+    num_joints,
+    hip_height,
+    FLAG_COM_PLOTS)
 
 output_file_name = home_path + f'/Documents/Programmation/rectangle-labelling/output/Results/{Xsens_Subject_name[0]}/{movie_name}_animation_no_level.mp4'
-animate(Xsens_position_on_pupil_no_level, Xsens_CoM_on_pupil_no_level, elevation, azimuth, links, output_file_name, 0)
+animate(Xsens_orientation_per_move, Xsens_position_no_level_CoM_corrected_per_move, CoM_trajectory_per_move, elevation_per_move, azimuth_per_move, eye_position_height, eye_position_depth, links, num_joints, output_file_name, 0)
 
-gaze_orientation()
 
 
 

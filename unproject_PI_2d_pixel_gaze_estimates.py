@@ -6,23 +6,23 @@ import cv2
 import numpy as np
 import requests
 
-# ------------ Change accordingly ----------------------
-# To download the camera intrinsics, we need two things:
+# # ------------ Change accordingly ----------------------
+# # To download the camera intrinsics, we need two things:
+#
+# # API key - Ensures fair use of Pupil Cloud resources.
+# #           Go to your Pupil Cloud settings -> Developer
+# #           and click `Generate New Token`. Copy and
+# #           replace the xxx...xxx string below.
+# API_KEY = "57zNXW3fnAXszxBRXSas2V9LFkt7KsPkhxNNeSjs8MFF" # "m62BDZSVEo96cSaj7eynAzD4vTk6ujfZmPQkZRg9WEXX"
+#
+# # Serial number - Tells Pupil Cloud which intrinsics to
+# #                 to look for. You can find the value on
+# #                 the side of your scene camera.
+# SCENE_CAMERA_SERIAL_NUMBER = "HS6VE"
+# # ------------------------------------------------------
 
-# API key - Ensures fair use of Pupil Cloud resources.
-#           Go to your Pupil Cloud settings -> Developer
-#           and click `Generate New Token`. Copy and
-#           replace the xxx...xxx string below.
-API_KEY = "57zNXW3fnAXszxBRXSas2V9LFkt7KsPkhxNNeSjs8MFF" # "m62BDZSVEo96cSaj7eynAzD4vTk6ujfZmPQkZRg9WEXX"
 
-# Serial number - Tells Pupil Cloud which intrinsics to
-#                 to look for. You can find the value on
-#                 the side of your scene camera.
-SCENE_CAMERA_SERIAL_NUMBER = "HS6VE"
-# ------------------------------------------------------
-
-
-def pixelPoints_to_gazeAngles(elevation_pixel, azimuth_pixel):
+def pixelPoints_to_gazeAngles(elevation_pixel, azimuth_pixel, SCENE_CAMERA_SERIAL_NUMBER):
     # Here we define some example pixel locations. Required shape: Nx2
     # points_2d = [
     #     [0, 0],  # top left
@@ -33,13 +33,17 @@ def pixelPoints_to_gazeAngles(elevation_pixel, azimuth_pixel):
     #     [0, 1080 // 2],  # left middle
     #     [1088 // 2, 0],  # top center
     # ]
+
+    API_KEY = "VPNzqxefqpunjUdzKWb3Fr9hQM368y7Q6Lqkc4KVxLHT"
+
+
     points_2d = [[] for i in range(len(elevation_pixel))]
     for i in range(len(elevation_pixel)):
         points_2d[i] = [azimuth_pixel[i], elevation_pixel[i]]
     
     def download_intrinsics():
         """Download your camera's intrinsics from Pupil Cloud"""
-        print("Downloading intrinsics...")
+        # print("Downloading intrinsics...")
         serial = SCENE_CAMERA_SERIAL_NUMBER.lower()
         url = f"https://api.cloud.pupil-labs.com/hardware/{serial}/calibration.v1?json"
         resp = requests.get(url, params={"api-key": API_KEY})
@@ -52,7 +56,7 @@ def pixelPoints_to_gazeAngles(elevation_pixel, azimuth_pixel):
         :param pts_2d, shape: Nx2
         :return: Array of unprojected 3d points, shape: Nx3
         """
-        print("Unprojecting points...")
+        # print("Unprojecting points...")
         # Convert type to numpy arrays (OpenCV requirements)
         camera_matrix = np.array(camera_matrix)
         distortion_coefs = np.array(distortion_coefs)
@@ -76,7 +80,7 @@ def pixelPoints_to_gazeAngles(elevation_pixel, azimuth_pixel):
     def cart_to_spherical(points_3d, apply_rad2deg=True):
         # convert cartesian to spherical coordinates
         # source: http://stackoverflow.com/questions/4116658/faster-numpy-cartesian-to-spherical-coordinate-conversion
-        print("Converting cartesian to spherical coordinates...")
+        # print("Converting cartesian to spherical coordinates...")
         x = points_3d[:, 0]
         y = points_3d[:, 1]
         z = points_3d[:, 2]
@@ -96,8 +100,8 @@ def pixelPoints_to_gazeAngles(elevation_pixel, azimuth_pixel):
 
         return radius, elevation, azimuth
 
-    print("pixel location input:")
-    pprint(points_2d)
+    # print("pixel location input:")
+    # pprint(points_2d)
 
     # Secondly, we download the camera intrinsics from Pupil Cloud
     intrinsics = download_intrinsics()
@@ -106,22 +110,22 @@ def pixelPoints_to_gazeAngles(elevation_pixel, azimuth_pixel):
 
     # Unproject pixel locations without normalizing. Resulting 3d points lie on a plane
     # with z=1 in reference to the camera origin (0, 0, 0).
-    points_3d = unproject_points(
-        points_2d, camera_matrix, distortion_coeff, normalize=False
-    )
-    print("3d directional output (normalize=False):")
-    pprint(points_3d)
+    # points_3d = unproject_points(
+    #     points_2d, camera_matrix, distortion_coeff, normalize=False
+    # )
+    # print("3d directional output (normalize=False):")
+    # pprint(points_3d)
 
     # Unproject pixel locations with normalizing. Resulting 3d points lie on a sphere
     # with radius=1 around the camera origin (0, 0, 0).
     points_3d = unproject_points(
         points_2d, camera_matrix, distortion_coeff, normalize=True
     )
-    print("3d directional output (normalize=True):")
-    pprint(points_3d)
+    # print("3d directional output (normalize=True):")
+    # pprint(points_3d)
 
     radius, elevation, azimuth = cart_to_spherical(points_3d, apply_rad2deg=True)
-    print("radius, elevation, azimuth (in degrees):")
+    # print("radius, elevation, azimuth (in degrees):")
     # elevation: vertical direction
     #   positive numbers point up
     #   negative numbers point bottom
@@ -129,7 +133,7 @@ def pixelPoints_to_gazeAngles(elevation_pixel, azimuth_pixel):
     #   positive numbers point right
     #   negative numbers point left
     # convert to numpy array for display purposes:
-    pprint(np.array([radius, elevation, azimuth]).T)
+    # pprint(np.array([radius, elevation, azimuth]).T)
     
     return elevation, azimuth
 
