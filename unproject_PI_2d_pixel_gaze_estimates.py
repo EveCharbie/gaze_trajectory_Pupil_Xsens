@@ -124,7 +124,9 @@ def pixelPoints_to_gazeAngles(elevation_pixel, azimuth_pixel, SCENE_CAMERA_SERIA
     # print("3d directional output (normalize=True):")
     # pprint(points_3d)
 
-    radius, elevation, azimuth = cart_to_spherical(points_3d, apply_rad2deg=True)
+    radius, azimuth, elevation = cart_to_spherical(points_3d, apply_rad2deg=True)
+    elevation = elevation * np.pi / 180
+    azimuth = azimuth * np.pi / 180
     # print("radius, elevation, azimuth (in degrees):")
     # elevation: vertical direction
     #   positive numbers point up

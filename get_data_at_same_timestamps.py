@@ -45,11 +45,11 @@ def get_data_at_same_timestamps(
                 Xsens_position[int(xsens_start_of_move_index[i]-2) : int(xsens_end_of_move_index[i])+2, j])
             Xsens_position_per_move[i][:, j] = xsens_interp_on_pupil(time_vector_pupil_per_move[i])
 
-    Xsens_orientation_per_move = [np.array([]) for i in range(len(start_of_move_index))]
+    Xsens_orientation_per_move = [np.array([]) for _ in range(len(start_of_move_index))]
     for i in range(len(start_of_move_index)):
         Xsens_orientation_per_move[i] = np.zeros((len(time_vector_pupil_per_move[i]), 4*num_joints))
         for j in range(len(time_vector_pupil_per_move[i])):
-            idx_closest = np.argmin(time_vector_pupil_per_move[i][j] - time_vector_xsens)
+            idx_closest = np.argmin(np.abs(time_vector_pupil_per_move[i][j] - time_vector_xsens))
             if time_vector_xsens[idx_closest] < time_vector_pupil_per_move[i][j]:
                 idx_0 = idx_closest
                 idx_1 = idx_closest + 1
@@ -92,6 +92,15 @@ def get_data_at_same_timestamps(
     for i in range(len(start_of_move_index)):
         elevation_per_move[i] = elevation[int(start_of_move_index[i]) : int(end_of_move_index[i]) + 1] # voir si c'est end+1 ou pas
         azimuth_per_move[i] = azimuth[int(start_of_move_index[i]): int(end_of_move_index[i]) + 1]  # voir si c'est end+1 ou pas
+
+
+    plt.figure()
+    plt.plot(time_vector_pupil_offset, elevation, '-r', label='elevation')
+    plt.plot(time_vector_pupil_offset, azimuth, '-b', label='azimuth')
+    for i in range(len(time_vector_pupil_per_move)):
+        plt.plot(time_vector_pupil_per_move[i], elevation_per_move [i], '-m')
+        plt.plot(time_vector_pupil_per_move[i], azimuth_per_move[i], '-c')
+    plt.show()
 
     return time_vector_pupil_per_move, Xsens_orientation_per_move, Xsens_position_per_move, Xsens_CoM_per_move, elevation_per_move, azimuth_per_move
 

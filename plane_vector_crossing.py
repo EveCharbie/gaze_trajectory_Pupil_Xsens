@@ -84,12 +84,11 @@ def unwrap_gaze_position(gaze_position):
 
     return gaze_position_x_y
 
-################### Attention le plafond est 'la heuteur de la toile' trop haut
-# ceiling height = 9.462 -
+
 # zero is positioned at the center of the trampoline
 planes_points = [[121 * 0.0254 / 2, 7.193, 0], # trampoline
                  [121 * 0.0254 / 2, 7.193, 0], # wall front
-                 [121 * 0.0254 / 2, 7.193, 9.462], # ceiling
+                 [121 * 0.0254 / 2, 7.193, 9.4620 - 1.2192], # ceiling
                  [121 * 0.0254 / 2, -8.881, 0], # wall back
                  [121 * 0.0254 / 2, 7.193, 0], # bound right
                  [-121 * 0.0254 / 2, 7.360, 0], # bound left
@@ -104,7 +103,7 @@ Z = np.zeros((100, 100))
 planes_plots_info.append([X, Y, Z]) # trampoline
 
 x = np.linspace(-121 * 0.0254 / 2, 121 * 0.0254 / 2, 100)
-z = np.linspace(0, 9.462, 100)
+z = np.linspace(0, 9.4620 - 1.2192, 100)
 X, Z = np.meshgrid(x, z)
 Y = ((7.193 - 7.360) / (2 * 121 * 0.0254 / 2)) * X + 7.360 - ((7.193 - 7.360) / (2 * 121 * 0.0254 / 2)) * (-121 * 0.0254 / 2)
 planes_plots_info.append([X, Y, Z]) # wall front
@@ -112,23 +111,23 @@ planes_plots_info.append([X, Y, Z]) # wall front
 x = np.linspace(-121 * 0.0254 / 2, 121 * 0.0254 / 2, 100)
 y = np.linspace(-8.881, 7.360, 100)
 X, Y = np.meshgrid(x, y)
-Z = np.ones((100, 100)) * 9.462
+Z = np.ones((100, 100)) * 9.4620 - 1.2192
 planes_plots_info.append([X, Y, Z]) # ceiling
 
 x = np.linspace(-121 * 0.0254 / 2, 121 * 0.0254 / 2, 100)
-z = np.linspace(0, 9.462, 100)
+z = np.linspace(0, 9.4620 - 1.2192, 100)
 X, Z = np.meshgrid(x, z)
 Y = np.ones((100, 100)) * -8.881
 planes_plots_info.append([X, Y, Z]) # wall back
 
 y = np.linspace(-8.881, 7.193, 100)
-z = np.linspace(0, 9.462, 100)
+z = np.linspace(0, 9.4620 - 1.2192, 100)
 Y, Z = np.meshgrid(y, z)
 X = np.ones((100, 100)) * 121 * 0.0254 / 2
 planes_plots_info.append([X, Y, Z]) # bound right
 
 y = np.linspace(-8.881, 7.360, 100)
-z = np.linspace(0, 9.462, 100)
+z = np.linspace(0, 9.4620 - 1.2192, 100)
 Y, Z = np.meshgrid(y, z)
 X = np.ones((100, 100)) * -121 * 0.0254 / 2
 planes_plots_info.append([X, Y, Z]) # bound left

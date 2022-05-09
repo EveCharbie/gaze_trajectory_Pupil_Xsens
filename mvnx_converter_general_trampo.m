@@ -3,6 +3,7 @@ function [data] = mvnx_converter_general_trampo(mvnx, file_dir, file_name, Subje
     %trim unwanted information
     temp = mvnx.subject.frames.frame;
     global_JCS_positions = mvnx.subject.frames.frame(3).position;
+    global_JCS_orientations = mvnx.subject.frames.frame(3).orientation;
     temp = temp(4:end); %get rid of unwanted fields
     frameRate = mvnx.subject.frameRate;
     % fields = { 'tc' , 'ms', 'type', 'index', 'footContacts', 'jointAngleXZY', 'jointAngleErgoXZY', 'jointAngleErgo', 'centerOfMass'}; %fields you would like to remove
@@ -115,6 +116,7 @@ function [data] = mvnx_converter_general_trampo(mvnx, file_dir, file_name, Subje
     save( [new_folder_name, '/', 'jointAngle.mat'], 'jointAngle')
     save( [new_folder_name, '/', 'centerOfMass.mat'], 'centerOfMass')
     save( [new_folder_name, '/', 'global_JCS_positions.mat'], 'global_JCS_positions')
+    save( [new_folder_name, '/', 'global_JCS_orientations.mat'], 'global_JCS_orientations')
 
     clear data mvnx temp 
 

@@ -42,8 +42,8 @@ def CoM_transfo(time_vector_pupil_per_move, Xsens_position_per_move, Xsens_CoM_p
         ToF_imove = end_time - start_time
         airborn_time = time_vector_pupil_per_move[j] - time_vector_pupil_per_move[j][0]
 
-        CoM_initial_position = np.array([0, 0, hip_height]) - np.array([0, 0, Xsens_CoM_no_level[j][0, 2]])
-        CoM_final_position = np.array([0, 0, hip_height]) - np.array([0, 0, Xsens_CoM_no_level[j][-1, 2]])
+        CoM_initial_position = np.array([0, 0, Xsens_CoM_no_level[j][0, 2]])
+        CoM_final_position = np.array([0, 0, Xsens_CoM_no_level[j][-1, 2]])
         CoM_initial_velocity = (CoM_final_position - CoM_initial_position - 0.5*-9.81*ToF_imove**2) / ToF_imove
 
         CoM_trajectory[j] = np.zeros((len(time_vector_pupil_per_move[j]), 3))
@@ -54,6 +54,11 @@ def CoM_transfo(time_vector_pupil_per_move, Xsens_position_per_move, Xsens_CoM_p
         for i in range(np.shape(Xsens_position_no_level_CoM_corrected[j])[0]):
             for k in range(num_joints):
                 Xsens_position_no_level_CoM_corrected[j][i, 3*k:3*(k+1)] = Xsens_position_no_level[j][i,3*k:3*(k+1)] + hip_trajectory_imove[i, :]
+
+    if FLAG_COM_PLOTS:
+        plt.figure()
+        plt.plot(time_vector_pupil_per_move[0], CoM_trajectory[0][:, 2], label='CoM trajectory')
+        plt.show()
 
     return Xsens_position_no_level_CoM_corrected, CoM_trajectory
 

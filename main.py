@@ -162,6 +162,7 @@ Xsens_sensorFreeAcceleration = sio.loadmat(file_dir + file_name + 'sensorFreeAcc
 Xsens_jointAngle = sio.loadmat(file_dir + file_name + 'jointAngle.mat')["jointAngle"]
 Xsens_centerOfMass = sio.loadmat(file_dir + file_name + 'centerOfMass.mat')["centerOfMass"]
 Xsens_global_JCS_positions = sio.loadmat(file_dir + file_name + 'global_JCS_positions.mat')["global_JCS_positions"]
+Xsens_global_JCS_orientations = sio.loadmat(file_dir + file_name + 'global_JCS_orientations.mat')["global_JCS_orientations"]
 
 num_joints = int(round(np.shape(Xsens_position)[1])/3)
 
@@ -234,20 +235,20 @@ start_of_jump_index = time_stamps_eye_tracking_index_on_pupil[start_of_jump_inde
 # 5: pos_x_bedFrame -> computed from labeling and distortion
 # 6: pos_y_bedFrame -> computed from labeling and distortion
 
-csv_imu = np.zeros((len(csv_imu_read), 7))
-for i in range(len(csv_imu_read)):
-    if float(csv_imu_read[i][0][2]) == 0:
-        break
-    csv_imu[i, 0] = float(csv_imu_read[i][0][2])  # timestemp
-    csv_imu[i, 1] = float(csv_imu_read[i][0][3])  # gyro_x [deg/s]
-    csv_imu[i, 2] = float(csv_imu_read[i][0][4])  # gyro_y [deg/s]
-    csv_imu[i, 3] = float(csv_imu_read[i][0][5])  # gyro_z [deg/s]
-    csv_imu[i, 4] = float(csv_imu_read[i][0][6]) * 9.81  # acceleration_x [était en G, maintenant en m/s**2]
-    csv_imu[i, 5] = float(csv_imu_read[i][0][7]) * 9.81  # acceleration_y [était en G, maintenant en m/s**2]
-    csv_imu[i, 6] = float(csv_imu_read[i][0][8]) * 9.81  # acceleration_z [était en G, maintenant en m/s**2]
-    # csv_imu[i, 4] = np.argmin(np.abs(csv_eye_tracking[i, 0] - time_stamps_eye_tracking)) # closest image timestemp
-
-csv_imu = csv_imu[np.nonzero(csv_imu[:, 0])[0], :]
+# csv_imu = np.zeros((len(csv_imu_read), 7))
+# for i in range(len(csv_imu_read)):
+#     if float(csv_imu_read[i][0][2]) == 0:
+#         break
+#     csv_imu[i, 0] = float(csv_imu_read[i][0][2])  # timestemp
+#     csv_imu[i, 1] = float(csv_imu_read[i][0][3])  # gyro_x [deg/s]
+#     csv_imu[i, 2] = float(csv_imu_read[i][0][4])  # gyro_y [deg/s]
+#     csv_imu[i, 3] = float(csv_imu_read[i][0][5])  # gyro_z [deg/s]
+#     csv_imu[i, 4] = float(csv_imu_read[i][0][6]) * 9.81  # acceleration_x [était en G, maintenant en m/s**2]
+#     csv_imu[i, 5] = float(csv_imu_read[i][0][7]) * 9.81  # acceleration_y [était en G, maintenant en m/s**2]
+#     csv_imu[i, 6] = float(csv_imu_read[i][0][8]) * 9.81  # acceleration_z [était en G, maintenant en m/s**2]
+#     # csv_imu[i, 4] = np.argmin(np.abs(csv_eye_tracking[i, 0] - time_stamps_eye_tracking)) # closest image timestemp
+#
+# csv_imu = csv_imu[np.nonzero(csv_imu[:, 0])[0], :]
 
 # 2 -> 0: imu_timestamp
 # 3 -> 1: gyro_x
@@ -258,17 +259,25 @@ csv_imu = csv_imu[np.nonzero(csv_imu[:, 0])[0], :]
 # 8 -> 6: acceleration_z
 
 
-
 ######################################################################################################################
 
 
-output_file_name = home_path + f'/Documents/Programmation/rectangle-labelling/output/Results/{Xsens_Subject_name[0]}/{movie_name}_animation_no_level.mp4'
-animate(Xsens_orientation, [Xsens_position], [Xsens_centerOfMass], [np.zeros((len(Xsens_position)))], [np.zeros((len(Xsens_position)))], eye_position_height, eye_position_depth, links, num_joints, output_file_name, 250)
+# Xsens_position_centered = np.zeros(np.shape(Xsens_position))
+# Xsens_CoM_centered = np.zeros((np.shape(Xsens_centerOfMass)[0], 3))
+# for i in range(np.shape(Xsens_position)[0]):
+#     Pelvis_position = Xsens_position[i, :3]
+#     for k in range(num_joints):
+#         Xsens_position_centered[i, 3 * k:3 * (k + 1)] = Xsens_position[i, 3 * k:3 * (k + 1)] - Pelvis_position + np.array([0, 0, hip_height])
+#     Xsens_CoM_centered[i, :] = Xsens_centerOfMass[i, :3] - Pelvis_position + np.array([0, 0, hip_height])
+#
+# output_file_name = home_path + f'/Documents/Programmation/rectangle-labelling/output/Results/{Xsens_Subject_name[0]}/{movie_name}_animation_no_level.mp4'
+# animate(Xsens_orientation, Xsens_position_centered, Xsens_global_JCS_orientations[0], Xsens_CoM_centered, np.zeros((len(Xsens_position))), np.zeros((len(Xsens_position))), eye_position_height, eye_position_depth, links, num_joints, output_file_name, 20)
+
 
 FLAG_SYNCHRO_PLOTS =  True #False #
 FLAG_COM_PLOTS = False # True #
 
-xsens_start_of_jump_index, xsens_end_of_jump_index, xsens_start_of_move_index, xsens_end_of_move_index, time_vector_xsens, time_vector_pupil_offset = sync_jump(Xsens_sensorFreeAcceleration, start_of_jump_index, end_of_jump_index, start_of_move_index, end_of_move_index, FLAG_SYNCHRO_PLOTS, csv_imu, Xsens_ms)
+xsens_start_of_jump_index, xsens_end_of_jump_index, xsens_start_of_move_index, xsens_end_of_move_index, time_vector_xsens, time_vector_pupil_offset = sync_jump(Xsens_sensorFreeAcceleration, start_of_jump_index, end_of_jump_index, start_of_move_index, end_of_move_index, FLAG_SYNCHRO_PLOTS, csv_eye_tracking, Xsens_ms)
 
 time_vector_pupil_per_move, Xsens_orientation_per_move, Xsens_position_per_move, Xsens_CoM_per_move, elevation_per_move, azimuth_per_move = get_data_at_same_timestamps(
     Xsens_orientation,
@@ -292,8 +301,9 @@ Xsens_position_no_level_CoM_corrected_per_move, CoM_trajectory_per_move = CoM_tr
     hip_height,
     FLAG_COM_PLOTS)
 
-output_file_name = home_path + f'/Documents/Programmation/rectangle-labelling/output/Results/{Xsens_Subject_name[0]}/{movie_name}_animation_no_level.mp4'
-animate(Xsens_orientation_per_move, Xsens_position_no_level_CoM_corrected_per_move, CoM_trajectory_per_move, elevation_per_move, azimuth_per_move, eye_position_height, eye_position_depth, links, num_joints, output_file_name, 0)
+for j in range(len(Xsens_position)):
+    output_file_name = home_path + f'/Documents/Programmation/rectangle-labelling/output/Results/{Xsens_Subject_name[0]}/{move_names[j]}/{movie_name}.mp4'
+    animate(Xsens_orientation_per_move[j], Xsens_position_no_level_CoM_corrected_per_move[j], Xsens_global_JCS_orientations[0], CoM_trajectory_per_move[j], elevation_per_move[j], azimuth_per_move[j], eye_position_height, eye_position_depth, links, num_joints, output_file_name, 0)
 
 
 
